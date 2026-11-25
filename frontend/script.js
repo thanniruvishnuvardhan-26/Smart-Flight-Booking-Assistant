@@ -138,19 +138,97 @@ function renderPage(pageId, pushState = true) {
 function getFlightFormData() {
   const durationVal = parseFloat(document.getElementById("duration").value);
   const daysLeftVal = parseInt(document.getElementById("days_left").value, 10);
-  const stopsVal = parseInt(document.getElementById("stops").value, 10);
+  const stopsVal = document.getElementById("stops").value || "zero";
 
   return {
-    airline: document.getElementById("airline").value || "Vistara",
+    airline: document.getElementById("airline").value || "SpiceJet",
     source_city: document.getElementById("source_city").value || "Delhi",
     departure_time: document.getElementById("departure_time").value || "Morning",
-    stops: isNaN(stopsVal) ? 0 : stopsVal,
-    arrival_time: document.getElementById("arrival_time").value || "Evening",
+    stops: stopsVal,
+    arrival_time: document.getElementById("arrival_time").value || "Afternoon",
     destination_city: document.getElementById("destination_city").value || "Mumbai",
     flight_class: document.getElementById("flight_class").value || "Economy",
-    duration: isNaN(durationVal) || durationVal <= 0 ? 2.15 : durationVal,
+    duration: isNaN(durationVal) || durationVal <= 0 ? 2.17 : durationVal,
     days_left: isNaN(daysLeftVal) || daysLeftVal < 1 ? 15 : daysLeftVal
   };
+}
+
+// Dynamic Flight Calculation: Auto Duration and Arrival Slot
+async function updateDynamicFlightCalculation() {
+  const source = document.getElementById("source_city")?.value;
+  const destination = document.getElementById("destination_city")?.value;
+  const stops = document.getElementById("stops")?.value || "zero";
+  const departureTime = document.getElementById("departure_time")?.value || "Morning";
+
+  if (!source || !destination || source === destination) return;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/calculate-flight-details`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source_city: source,
+        destination_city: destination,
+        stops: stops,
+        departure_time: departureTime
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const durInput = document.getElementById("duration");
+      const arrSelect = document.getElementById("arrival_time");
+      const midnightNotice = document.getElementById("midnightCrossingNotice");
+
+      if (durInput) durInput.value = data.duration;
+      if (arrSelect) arrSelect.value = data.arrival_time;
+      if (midnightNotice) {
+        midnightNotice.style.display = data.crosses_midnight ? "block" : "none";
+      }
+    }
+  } catch (err) {
+    console.warn("Auto-calculation lookup error:", err);
+  }
+}
+
+// Date Picker Sync with Days Left
+function initTravelDateSync() {
+  const dateInput = document.getElementById("travel_date");
+  const daysLeftInput = document.getElementById("days_left");
+  if (!dateInput || !daysLeftInput) return;
+
+  // Set min date to today, max date to 50 days from today
+  const today = new Date();
+  const minDate = today.toISOString().split("T")[0];
+  const maxDateObj = new Date();
+  maxDateObj.setDate(today.getDate() + 50);
+  const maxDate = maxDateObj.toISOString().split("T")[0];
+
+  dateInput.min = minDate;
+  dateInput.max = maxDate;
+
+  // Set default date to today + days_left
+  const defaultDate = new Date();
+  defaultDate.setDate(today.getDate() + parseInt(daysLeftInput.value || 15, 10));
+  dateInput.value = defaultDate.toISOString().split("T")[0];
+
+  dateInput.addEventListener("change", () => {
+    const selectedDate = new Date(dateInput.value);
+    const timeDiff = selectedDate - new Date(today.toISOString().split("T")[0]);
+    const diffDays = Math.round(timeDiff / (1000 * 60 * 60 * 24));
+    if (diffDays >= 1 && diffDays <= 50) {
+      daysLeftInput.value = diffDays;
+    }
+  });
+
+  daysLeftInput.addEventListener("input", () => {
+    const days = parseInt(daysLeftInput.value, 10);
+    if (!isNaN(days) && days >= 1 && days <= 50) {
+      const newDate = new Date();
+      newDate.setDate(today.getDate() + days);
+      dateInput.value = newDate.toISOString().split("T")[0];
+    }
+  });
 }
 
 function validateCitySelection(flightData) {
@@ -308,6 +386,7 @@ function displayPredictionResult(data, flightData) {
   const upperVal = document.getElementById("predUpperPrice");
   const maeVal = document.getElementById("predMaeValue");
   const routePill = document.getElementById("predRoutePill");
+  const treeSpreadVal = document.getElementById("predTreeSpread");
 
   if (resultCard) resultCard.style.display = "block";
   if (nextActions) nextActions.style.display = "grid";
@@ -318,9 +397,42 @@ function displayPredictionResult(data, flightData) {
   if (lowerVal) lowerVal.textContent = `₹ ${data.lower_price.toLocaleString("en-IN")}`;
   if (upperVal) upperVal.textContent = `₹ ${data.upper_price.toLocaleString("en-IN")}`;
   if (maeVal) maeVal.textContent = data.mae.toLocaleString("en-IN");
+  if (treeSpreadVal && data.tree_uncertainty !== undefined) {
+    treeSpreadVal.textContent = data.tree_uncertainty.toLocaleString("en-IN");
+  }
 
+  const stopLabel = flightData.stops === "zero" || flightData.stops === 0 ? "Non-stop" : (flightData.stops === "one" || flightData.stops === 1 ? "1 Stop" : "2+ Stops");
   if (routePill) {
-    routePill.textContent = `${flightData.source_city} → ${flightData.destination_city} • ${flightData.airline} • ${flightData.flight_class} Class`;
+    routePill.textContent = `${flightData.source_city} → ${flightData.destination_city} • ${flightData.airline} • ${flightData.flight_class} • ${stopLabel} • ${data.effective_duration || flightData.duration} hrs`;
+  }
+
+  // Fetch Book-Now-or-Wait Advice
+  fetchBookNowOrWaitAdvice(flightData);
+}
+
+async function fetchBookNowOrWaitAdvice(flightData) {
+  const badgeCard = document.getElementById("advisorBadgeCard");
+  const badgeAction = document.getElementById("advisorBadgeAction");
+  const badgeReason = document.getElementById("advisorBadgeReason");
+
+  if (!badgeCard) return;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/book-now-or-wait`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(flightData)
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      badgeCard.style.display = "block";
+      badgeAction.textContent = data.action === "BOOK_NOW" ? "BOOK NOW" : (data.action === "CONSIDER_WAITING" ? "CONSIDER WAITING" : "STABLE FARE");
+      badgeAction.className = `badge-tag ${data.badge_color || 'emerald'}`;
+      badgeReason.textContent = data.recommendation;
+    }
+  } catch (err) {
+    console.warn("Advisor fetch error:", err);
   }
 }
 
@@ -1051,6 +1163,20 @@ document.addEventListener("DOMContentLoaded", () => {
   initPredictorForm();
   initBookingTrends();
   initCheaperAlternatives();
+  initTravelDateSync();
+
+  // Attach event listeners for dynamic flight duration and arrival slot calculation
+  ["source_city", "destination_city", "stops", "departure_time"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("change", () => {
+        updateDynamicFlightCalculation();
+      });
+    }
+  });
+
+  // Initial calculation on load
+  updateDynamicFlightCalculation();
 
   // Test API heartbeat
   fetch(`${API_BASE_URL}/`)
