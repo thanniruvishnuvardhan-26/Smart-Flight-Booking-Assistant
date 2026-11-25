@@ -6,46 +6,135 @@ echo        SMART FLIGHT BOOKING ASSISTANT LAUNCHER
 echo ========================================================
 echo.
 
+:: 1. Navigate to script's own directory (Guarantees correct project root)
 cd /d "%~dp0"
+echo [*] Project Root: %CD%
 
-:: 1. Detect Python Environment (Prefer project venv if present, otherwise system Python)
-set "PYTHON_EXE=python"
-if exist "venv\Scripts\python.exe" (
-    set "PYTHON_EXE=%~dp0venv\Scripts\python.exe"
-    echo [*] Using project virtual environment: venv\Scripts\python.exe
-) else (
-    echo [*] Using system Python
+:: 2. Robust Python Interpreter Resolution
+:: Priority:
+::  a) Project virtual environment (if python.exe is executable)
+::  b) System python (if functional)
+::  c) py launcher (Windows standard)
+set "PYTHON_EXE="
+
+if exist "%~dp0venv\Scripts\python.exe" (
+    "%~dp0venv\Scripts\python.exe" -c "import sys" >nul 2>&1
+    if !errorlevel! equ 0 (
+        set "PYTHON_EXE=%~dp0venv\Scripts\python.exe"
+        echo [*] Using project virtual environment: venv\Scripts\python.exe
+    ) else (
+        echo [!] Warning: venv\Scripts\python.exe exists but failed execution test.
+    )
 )
 
-:: 2. Check and clean up any stale processes on port 8000 (Backend)
+if not defined PYTHON_EXE (
+    python -c "import sys" >nul 2>&1
+    if !errorlevel! equ 0 (
+        for /f "delims=" %%I in ('python -c "import sys; print(sys.executable)"') do set "PYTHON_EXE=%%I"
+        echo [*] Using system Python: !PYTHON_EXE!
+    )
+)
+
+if not defined PYTHON_EXE (
+    py -c "import sys" >nul 2>&1
+    if !errorlevel! equ 0 (
+        for /f "delims=" %%I in ('py -c "import sys; print(sys.executable)"') do set "PYTHON_EXE=%%I"
+        echo [*] Using Python launcher (py): !PYTHON_EXE!
+    )
+)
+
+if not defined PYTHON_EXE (
+    echo.
+    echo [ERROR] No working Python interpreter found on this computer!
+    echo Please install Python 3.10+ from https://www.python.org/downloads/
+    echo Ensure "Add Python to PATH" is checked during installation.
+    echo.
+    pause
+    exit /b 1
+)
+
+:: Verify critical modules
+echo [*] Verifying essential packages (fastapi, uvicorn, pandas, joblib, sklearn)...
+"!PYTHON_EXE!" -c "import fastapi, uvicorn, pandas, joblib, sklearn" >nul 2>&1
+if !errorlevel! neq 0 (
+    echo.
+    echo [ERROR] Required packages are missing in the selected Python environment:
+    echo   !PYTHON_EXE!
+    echo.
+    echo Please install dependencies by running:
+    echo   "!PYTHON_EXE!" -m pip install -r requirements.txt
+    echo.
+    pause
+    exit /b 1
+)
+echo [*] All required Python dependencies verified.
+
+:: Verify model files exist
+if not exist "%~dp0backend\flight_price_rf_pipeline_v2.pkl" (
+    if not exist "%~dp0backend\flight_price_rf_pipeline.pkl" (
+        echo.
+        echo [ERROR] Trained model file (.pkl) not found in "%~dp0backend"!
+        echo.
+        pause
+        exit /b 1
+    )
+)
+echo [*] ML Model file verified.
+
+:: 3. Port conflict resolution (Ports 8000 & 5500)
+echo.
+echo [*] Checking port availability...
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":8000" ^| findstr "LISTENING"') do (
-    echo [*] Stopping previous backend process on port 8000 (PID: %%a)...
+    echo [*] Detected process on port 8000 (PID: %%a). Releasing port...
     taskkill /F /PID %%a >nul 2>&1
 )
 
-:: 3. Check and clean up any stale processes on port 5500 (Frontend)
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":5500" ^| findstr "LISTENING"') do (
-    echo [*] Stopping previous frontend process on port 5500 (PID: %%a)...
+    echo [*] Detected process on port 5500 (PID: %%a). Releasing port...
     taskkill /F /PID %%a >nul 2>&1
 )
 
+:: 4. Start Backend Server
 echo.
 echo [1/3] Starting FastAPI Backend on port 8000...
-start "Flight Assistant Backend (FastAPI)" cmd /k "cd /d "%~dp0backend" && "%PYTHON_EXE%" -m uvicorn main:app --port 8000 --host 127.0.0.1 --reload"
+start "Flight Assistant Backend (FastAPI)" cmd /k "cd /d "%~dp0backend" && "!PYTHON_EXE!" -m uvicorn main:app --port 8000 --host 127.0.0.1"
 
+:: 5. Start Frontend Server
 echo [2/3] Starting Frontend Server on port 5500...
-start "Flight Assistant Frontend (Server)" cmd /k "cd /d "%~dp0frontend" && "%PYTHON_EXE%" serve.py 5500"
+start "Flight Assistant Frontend (Server)" cmd /k "cd /d "%~dp0frontend" && "!PYTHON_EXE!" serve.py 5500"
 
-echo [3/3] Waiting 3 seconds for services to initialize...
-timeout /t 3 /nobreak >nul
+:: 6. Health Check Wait Loop (Verify backend is actually responding before opening browser)
+echo [3/3] Waiting for backend services to respond...
+set "READY=0"
+for /L %%i in (1,1,12) do (
+    if !READY! equ 0 (
+        "!PYTHON_EXE!" -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=1)" >nul 2>&1
+        if !errorlevel! equ 0 (
+            set "READY=1"
+        ) else (
+            timeout /t 1 /nobreak >nul
+        )
+    )
+)
 
-echo Opening Smart Flight Booking Assistant in your browser...
-start http://127.0.0.1:5500/index.html
+if !READY! equ 1 (
+    echo [*] Backend health check PASSED (http://127.0.0.1:8000/health is responsive).
+    echo.
+    echo ========================================================
+    echo   SUCCESS: All Services Are Live!
+    echo   Frontend Web App : http://127.0.0.1:5500/index.html
+    echo   FastAPI Backend  : http://127.0.0.1:8000
+    echo   Interactive Docs : http://127.0.0.1:8000/docs
+    echo ========================================================
+    echo.
+    echo Launching default web browser...
+    start http://127.0.0.1:5500/index.html
+) else (
+    echo.
+    echo [WARNING] Backend did not respond to health check within 12 seconds.
+    echo Please check the "Flight Assistant Backend (FastAPI)" console window for errors.
+    echo Attempting to open frontend anyway: http://127.0.0.1:5500/index.html
+    start http://127.0.0.1:5500/index.html
+)
 
-echo.
-echo ========================================================
-echo   Services are running!
-echo   Frontend : http://127.0.0.1:5500/index.html
-echo   Backend  : http://127.0.0.1:8000
-echo   API Docs : http://127.0.0.1:8000/docs
-echo ========================================================
+exit /b 0

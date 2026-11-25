@@ -694,3 +694,63 @@ def book_now_or_wait_advisor(flight: FlightDetails):
         "savings_potential": savings_potential,
         "currency": "INR"
     }
+
+
+# Book-Now-or-Wait Advisor
+@app.post("/book-now-or-wait")
+def book_now_or_wait_advisor(flight: FlightDetails):
+    """
+    Advisor Rule Engine:
+    - If days_left <= 3: Urgent window, prices increase rapidly close to departure -> "Book Now"
+    - If lowest price occurs in > days_left: (Can only wait if days_left allows)
+    - If lowest price in upcoming 50-day window occurs further out with > 15% discount -> "Consider Waiting"
+    - If currently at lowest or price variation is < 5% -> "Prices Stable / Good to Book"
+    """
+    trend_result = get_booking_trend(flight)
+    trend = trend_result["booking_trend"]
+    curr_days = flight.days_left
+    
+    current_price = next((item["predicted_price"] for item in trend if item["days_left"] == curr_days), trend[0]["predicted_price"])
+    
+    closer_days = [item for item in trend if item["days_left"] < curr_days]
+    
+    if curr_days <= 3:
+        action = "BOOK_NOW"
+        confidence = "High"
+        badge_color = "red"
+        reason = f"Only {curr_days} day(s) left before departure. In the historical dataset, airfares surge steeply in the final 72 hours."
+        savings_potential = 0.0
+    else:
+        if closer_days:
+            min_future = min(closer_days, key=lambda x: x["predicted_price"])
+            if min_future["predicted_price"] < current_price * 0.92:
+                action = "CONSIDER_WAITING"
+                confidence = "Moderate"
+                badge_color = "amber"
+                savings = round(current_price - min_future["predicted_price"], 2)
+                reason = f"Model projects a possible dip around {min_future['days_left']} days before departure (potential savings of ₹{savings:,.2f})."
+                savings_potential = savings
+            else:
+                action = "BOOK_NOW"
+                confidence = "High"
+                badge_color = "emerald"
+                reason = f"Current airfare (₹{current_price:,.2f}) is optimal. Fares historically rise steadily as the departure date nears."
+                savings_potential = 0.0
+        else:
+            action = "BOOK_NOW"
+            confidence = "High"
+            badge_color = "emerald"
+            reason = "Optimal booking window reached."
+            savings_potential = 0.0
+
+    return {
+        "action": action,
+        "confidence": confidence,
+        "badge_color": badge_color,
+        "recommendation": reason,
+        "current_price": current_price,
+        "cheapest_price_overall": trend_result["cheapest_price"],
+        "cheapest_overall_days_left": trend_result["cheapest_days_left"],
+        "savings_potential": savings_potential,
+        "currency": "INR"
+    }

@@ -9,8 +9,16 @@
  * - Real-time FastAPI model inference & benchmarks
  */
 
-// API Configuration
-const API_BASE_URL = "http://127.0.0.1:8000";
+// API Configuration: Automatically detects local development vs production deployment
+const IS_LOCAL = window.location.hostname === "localhost" || 
+                 window.location.hostname === "127.0.0.1" || 
+                 window.location.protocol === "file:";
+
+// Local FastAPI backend vs Deployed Render backend URL
+const LOCAL_API_URL = "http://127.0.0.1:8000";
+const PRODUCTION_API_URL = "https://smart-flight-booking-assistant.onrender.com";
+
+const API_BASE_URL = IS_LOCAL ? LOCAL_API_URL : PRODUCTION_API_URL;
 
 // State Management
 const appState = {

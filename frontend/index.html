@@ -1,31 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AeroMetrics | Premium Flight Intelligence & Airfare Estimation Platform</title>
-  
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+
   <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css?v=1795150702">
-  
+
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 
   <div class="app-container">
-    
+
     <!-- SIDEBAR NAVIGATION -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="logo-icon-box">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
           </svg>
         </div>
         <div class="logo-text">
@@ -36,36 +41,60 @@
 
       <nav class="sidebar-nav">
         <span class="nav-label">Navigation</span>
-        
+
         <a class="nav-item active" data-page="overview">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect width="7" height="9" x="3" y="3" rx="1" />
+            <rect width="7" height="5" x="14" y="3" rx="1" />
+            <rect width="7" height="9" x="14" y="12" rx="1" />
+            <rect width="7" height="5" x="3" y="16" rx="1" />
+          </svg>
           <span>Overview</span>
         </a>
 
         <a class="nav-item" data-page="predictor">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="m12 14 4-4" />
+            <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+          </svg>
           <span>Price Predictor</span>
         </a>
 
         <a class="nav-item" data-page="trends">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M3 3v18h18" />
+            <path d="m19 9-5 5-4-4-3 3" />
+          </svg>
           <span>Booking Trends</span>
         </a>
 
         <a class="nav-item" data-page="alternatives">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="m16 3 4 4-4 4" />
+            <path d="M20 7H4" />
+            <path d="m8 21-4-4 4-4" />
+            <path d="M4 17h16" />
+          </svg>
           <span>Cheaper Alternatives</span>
         </a>
 
         <a class="nav-item" data-page="insights">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="18" x2="18" y1="20" y2="10" />
+            <line x1="12" x2="12" y1="20" y2="4" />
+            <line x1="6" x2="6" y1="20" y2="14" />
+          </svg>
           <span>Fare Insights</span>
         </a>
 
         <span class="nav-label" style="margin-top: 16px;">Platform</span>
 
         <a class="nav-item" data-page="about">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4" />
+            <path d="M12 8h.01" />
+          </svg>
           <span>About & Methodology</span>
         </a>
       </nav>
@@ -83,14 +112,18 @@
 
     <!-- MAIN APP WRAPPER -->
     <div class="main-wrapper">
-      
+
       <!-- TOPBAR -->
       <header class="topbar">
         <div class="topbar-left">
           <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" x2="21" y1="6" y2="6" />
+              <line x1="3" x2="21" y1="12" y2="12" />
+              <line x1="3" x2="21" y1="18" y2="18" />
+            </svg>
           </button>
-          
+
           <div class="breadcrumbs">
             <span>Platform</span>
             <span>/</span>
@@ -100,11 +133,16 @@
 
         <div class="topbar-right">
           <div class="badge-tag amber">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 9v4" />
+              <path d="M12 17h.01" />
+            </svg>
             <span>2022 Historical Baseline</span>
           </div>
           <div class="badge-tag emerald">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
             <span id="apiStatusText">FastAPI Online</span>
           </div>
         </div>
@@ -117,18 +155,22 @@
              PAGE 1: OVERVIEW DASHBOARD
              ======================================================= -->
         <section class="page-view active" id="page-overview">
-          
+
           <!-- Hero Section with Airplane Curved Flight Path Animation -->
           <div class="hero-banner animate-card">
             <div>
               <div class="hero-badge">Next-Gen Flight Price Analytics</div>
               <h1 class="hero-title">Predict flight prices with <span>machine intelligence</span>.</h1>
               <p class="hero-desc">
-                Evaluate optimal flight booking windows, compare airline margins, and leverage our trained Random Forest pipeline to pinpoint the best airfare across major Indian routes.
+                Evaluate optimal flight booking windows, compare airline margins, and leverage our trained Random Forest
+                pipeline to pinpoint the best airfare across major Indian routes.
               </p>
               <div class="hero-actions">
                 <button class="btn btn-primary" onclick="navigateToPage('predictor')">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m12 14 4-4" />
+                    <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+                  </svg>
                   Predict Flight Price
                 </button>
                 <button class="btn btn-secondary" onclick="navigateToPage('trends')">
@@ -143,37 +185,34 @@
                 <!-- Flight Path Gradient -->
                 <defs>
                   <linearGradient id="flightPathGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.3"/>
-                    <stop offset="50%" stop-color="#2563EB" stop-opacity="0.8"/>
-                    <stop offset="100%" stop-color="#8B5CF6" stop-opacity="1"/>
+                    <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.3" />
+                    <stop offset="50%" stop-color="#2563EB" stop-opacity="0.8" />
+                    <stop offset="100%" stop-color="#8B5CF6" stop-opacity="1" />
                   </linearGradient>
-                  
+
                   <path id="airplaneCurvePath" d="M 30,200 C 100,210 150,70 360,40" />
                 </defs>
 
                 <!-- Cloud Elements -->
                 <g class="cloud cloud-1">
-                  <path d="M 60,85 a 16,16 0 0,1 28,-6 a 22,22 0 0,1 36,4 a 14,14 0 0,1 18,13 l -82,0 z"/>
+                  <path d="M 60,85 a 16,16 0 0,1 28,-6 a 22,22 0 0,1 36,4 a 14,14 0 0,1 18,13 l -82,0 z" />
                 </g>
                 <g class="cloud cloud-2">
-                  <path d="M 240,165 a 14,14 0 0,1 24,-5 a 18,18 0 0,1 30,3 a 12,12 0 0,1 15,11 l -69,0 z"/>
+                  <path d="M 240,165 a 14,14 0 0,1 24,-5 a 18,18 0 0,1 30,3 a 12,12 0 0,1 15,11 l -69,0 z" />
                 </g>
 
                 <!-- Dotted Curved Flight Path -->
-                <path d="M 30,200 C 100,210 150,70 360,40" 
-                      stroke="url(#flightPathGrad)" 
-                      stroke-width="3" 
-                      stroke-linecap="round"
-                      class="flight-curved-path" />
+                <path d="M 30,200 C 100,210 150,70 360,40" stroke="url(#flightPathGrad)" stroke-width="3"
+                  stroke-linecap="round" class="flight-curved-path" />
 
                 <!-- Origin Node -->
-                <circle cx="30" cy="200" r="5" fill="#2563EB"/>
-                <circle cx="30" cy="200" r="9" stroke="#93C5FD" stroke-width="1.5" opacity="0.6"/>
+                <circle cx="30" cy="200" r="5" fill="#2563EB" />
+                <circle cx="30" cy="200" r="9" stroke="#93C5FD" stroke-width="1.5" opacity="0.6" />
                 <text x="30" y="222" font-size="11" font-weight="700" fill="#64748B" text-anchor="middle">DEL</text>
 
                 <!-- Destination Node -->
-                <circle cx="360" cy="40" r="5" fill="#8B5CF6"/>
-                <circle cx="360" cy="40" r="9" stroke="#C4B5FD" stroke-width="1.5" opacity="0.6"/>
+                <circle cx="360" cy="40" r="5" fill="#8B5CF6" />
+                <circle cx="360" cy="40" r="9" stroke="#C4B5FD" stroke-width="1.5" opacity="0.6" />
                 <text x="360" y="24" font-size="11" font-weight="700" fill="#64748B" text-anchor="middle">BOM</text>
 
                 <!-- Animated Airplane travelling along curve -->
@@ -183,7 +222,8 @@
                   </animateMotion>
                   <g transform="translate(-14, -14)">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="#2563EB" stroke="#FFFFFF" stroke-width="1.5">
-                      <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
+                      <path
+                        d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
                     </svg>
                   </g>
                 </g>
@@ -194,13 +234,17 @@
           <!-- Dataset Limitation Disclaimer -->
           <div class="disclaimer-banner animate-card">
             <svg class="disclaimer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-              <line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/>
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+              <line x1="12" x2="12" y1="9" y2="13" />
+              <line x1="12" x2="12.01" y1="17" y2="17" />
             </svg>
             <div class="disclaimer-content">
               <h4>Dataset & Prediction Limitations Notice</h4>
               <p>
-                All price estimations, booking curve projections, and airline comparisons are generated from a machine learning model trained on a historical snapshot of 300,153 flights between February 11 and March 31, 2022. These are algorithmic estimates reflecting historical market dynamics, not real-time live airline pricing.
+                All price estimations, booking curve projections, and airline comparisons are generated from a machine
+                learning model trained on a historical snapshot of 300,153 flights between February 11 and March 31,
+                2022. These are algorithmic estimates reflecting historical market dynamics, not real-time live airline
+                pricing.
               </p>
             </div>
           </div>
@@ -211,7 +255,10 @@
               <div class="stat-top">
                 <span class="stat-label">Model Pipeline</span>
                 <div class="stat-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6Z"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="m10 15 5-3-5-3v6Z" />
+                  </svg>
                 </div>
               </div>
               <div class="stat-value">Random Forest</div>
@@ -222,7 +269,10 @@
               <div class="stat-top">
                 <span class="stat-label">Test-Set MAE</span>
                 <div class="stat-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v20" />
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
                 </div>
               </div>
               <div class="stat-value">₹ 1,293.06</div>
@@ -233,7 +283,9 @@
               <div class="stat-top">
                 <span class="stat-label">Dataset Records</span>
                 <div class="stat-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                  </svg>
                 </div>
               </div>
               <div class="stat-value">300,153</div>
@@ -244,7 +296,12 @@
               <div class="stat-top">
                 <span class="stat-label">Supported Routes</span>
                 <div class="stat-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M12 6h3a3 3 0 0 1 3 3v3"/><path d="M6 9v3a3 3 0 0 0 3 3h3"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="6" cy="6" r="3" />
+                    <circle cx="18" cy="18" r="3" />
+                    <path d="M12 6h3a3 3 0 0 1 3 3v3" />
+                    <path d="M6 9v3a3 3 0 0 0 3 3h3" />
+                  </svg>
                 </div>
               </div>
               <div class="stat-value">30 Metro Pairs</div>
@@ -256,26 +313,40 @@
           <div class="overview-features-grid">
             <div class="feature-card animate-card" onclick="navigateToPage('predictor')">
               <div class="feature-icon-wrapper">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v6l4 2" />
+                </svg>
               </div>
               <div class="feature-card-title">Instant Airfare Prediction</div>
-              <p class="feature-card-desc">Configure travel class, duration, departure timings, and stops to receive instant ML-inferred ticket valuations with confidence intervals.</p>
+              <p class="feature-card-desc">Configure travel class, duration, departure timings, and stops to receive
+                instant ML-inferred ticket valuations with confidence intervals.</p>
             </div>
 
             <div class="feature-card animate-card" onclick="navigateToPage('trends')">
               <div class="feature-icon-wrapper">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 3v18h18" />
+                  <path d="m19 9-5 5-4-4-3 3" />
+                </svg>
               </div>
               <div class="feature-card-title">50-Day Booking Curve</div>
-              <p class="feature-card-desc">Visualize exact daily price movements across all 50 booking days before departure to pinpoint the mathematical minimum fare.</p>
+              <p class="feature-card-desc">Visualize exact daily price movements across all 50 booking days before
+                departure to pinpoint the mathematical minimum fare.</p>
             </div>
 
             <div class="feature-card animate-card" onclick="navigateToPage('alternatives')">
               <div class="feature-icon-wrapper">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m16 3 4 4-4 4" />
+                  <path d="M20 7H4" />
+                  <path d="m8 21-4-4 4-4" />
+                  <path d="M4 17h16" />
+                </svg>
               </div>
               <div class="feature-card-title">Cost-Saving Alternatives</div>
-              <p class="feature-card-desc">Compare current flight inputs against alternative carriers, stops, and departure slots to identify instant rupee savings.</p>
+              <p class="feature-card-desc">Compare current flight inputs against alternative carriers, stops, and
+                departure slots to identify instant rupee savings.</p>
             </div>
           </div>
 
@@ -286,19 +357,23 @@
              PAGE 2: FLIGHT PRICE PREDICTOR
              ======================================================= -->
         <section class="page-view" id="page-predictor">
-          
+
           <div class="page-header">
             <div>
               <h2 class="page-title">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m12 14 4-4" />
+                  <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+                </svg>
                 Flight Price Estimator
               </h2>
-              <p class="page-subtitle">Configure flight attributes to query the trained Random Forest model in real time.</p>
+              <p class="page-subtitle">Configure flight attributes to query the trained Random Forest model in real
+                time.</p>
             </div>
           </div>
 
           <div class="predictor-layout">
-            
+
             <!-- Left Column: Form -->
             <div class="card animate-card">
               <div class="card-header">
@@ -310,7 +385,7 @@
 
               <form id="flightForm">
                 <div class="form-grid">
-                  
+
                   <!-- Airline -->
                   <div class="form-group">
                     <label class="form-label" for="airline">Airline Carrier</label>
@@ -372,12 +447,14 @@
                   <!-- Days Left -->
                   <div class="form-group">
                     <label class="form-label" for="days_left">Booking Window (Days Left: 1-50)</label>
-                    <input type="number" class="input-control" id="days_left" min="1" max="50" placeholder="e.g. 15" value="15" required>
+                    <input type="number" class="input-control" id="days_left" min="1" max="50" placeholder="e.g. 15"
+                      value="15" required>
                   </div>
 
                   <!-- Departure Time (Mandatory) -->
                   <div class="form-group">
-                    <label class="form-label" for="departure_time">Departure Slot <span style="color: #EF4444;">*</span></label>
+                    <label class="form-label" for="departure_time">Departure Slot <span
+                        style="color: #EF4444;">*</span></label>
                     <select class="select-control" id="departure_time" required>
                       <option value="">Select Departure Slot</option>
                       <option value="Early_Morning">Early Morning (04:00 - 08:00)</option>
@@ -403,18 +480,23 @@
                   <div class="form-group">
                     <label class="form-label" for="duration">
                       Flight Duration (Hours)
-                      <span class="badge-tag" style="padding: 2px 6px; font-size: 10px; margin-left: 6px; background: #EEF2FF; color: #4F46E5;">Auto-Calculated</span>
+                      <span class="badge-tag"
+                        style="padding: 2px 6px; font-size: 10px; margin-left: 6px; background: #EEF2FF; color: #4F46E5;">Auto-Calculated</span>
                     </label>
-                    <input type="number" class="input-control" id="duration" step="0.01" min="0.5" max="50" placeholder="Auto calculated..." value="2.17" readonly style="background-color: #F8FAFC; cursor: not-allowed;">
+                    <input type="number" class="input-control" id="duration" step="0.01" min="0.5" max="50"
+                      placeholder="Auto calculated..." value="2.17" readonly
+                      style="background-color: #F8FAFC; cursor: not-allowed;">
                   </div>
 
                   <!-- Arrival Time (Auto-Calculated Slot) -->
                   <div class="form-group">
                     <label class="form-label" for="arrival_time">
                       Arrival Slot
-                      <span class="badge-tag" style="padding: 2px 6px; font-size: 10px; margin-left: 6px; background: #EEF2FF; color: #4F46E5;">Auto-Calculated</span>
+                      <span class="badge-tag"
+                        style="padding: 2px 6px; font-size: 10px; margin-left: 6px; background: #EEF2FF; color: #4F46E5;">Auto-Calculated</span>
                     </label>
-                    <select class="select-control" id="arrival_time" disabled style="background-color: #F8FAFC; cursor: not-allowed;">
+                    <select class="select-control" id="arrival_time" disabled
+                      style="background-color: #F8FAFC; cursor: not-allowed;">
                       <option value="Early_Morning">Early Morning (04:00 - 08:00)</option>
                       <option value="Morning">Morning (08:00 - 12:00)</option>
                       <option value="Afternoon" selected>Afternoon (12:00 - 16:00)</option>
@@ -422,7 +504,8 @@
                       <option value="Night">Night (20:00 - 00:00)</option>
                       <option value="Late_Night">Late Night (00:00 - 04:00)</option>
                     </select>
-                    <div id="midnightCrossingNotice" style="font-size: 11px; color: #6366F1; margin-top: 4px; display: none;">
+                    <div id="midnightCrossingNotice"
+                      style="font-size: 11px; color: #6366F1; margin-top: 4px; display: none;">
                       🌙 Arrival crosses midnight (+1 day)
                     </div>
                   </div>
@@ -431,7 +514,10 @@
 
                 <div style="margin-top: 24px;">
                   <button type="submit" class="btn btn-primary" id="predictSubmitBtn" style="width: 100%;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="m12 14 4-4" />
+                      <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+                    </svg>
                     <span>Run AI Price Prediction</span>
                   </button>
                 </div>
@@ -440,14 +526,15 @@
 
             <!-- Right Column: Result or Empty State or Airplane Loader -->
             <div class="result-display-panel" id="predictionResultArea">
-              
+
               <!-- F. Airplane Loading Animation Stage Display -->
               <div class="flight-loading-overlay animate-card" id="flightLoadingStage">
                 <div class="loading-airplane-track">
                   <div class="track-line"></div>
                   <div class="animated-plane-icon">
                     <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
+                      <path
+                        d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
                     </svg>
                   </div>
                 </div>
@@ -460,10 +547,14 @@
               <!-- Initial Empty State -->
               <div class="empty-state-card animate-card" id="predictorEmptyState">
                 <div class="empty-icon">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="m12 14 4-4" />
+                    <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+                  </svg>
                 </div>
                 <h3 class="empty-title">Ready for Model Inference</h3>
-                <p class="empty-desc">Select your flight itinerary details on the left and click "Run AI Price Prediction" to calculate instant pricing.</p>
+                <p class="empty-desc">Select your flight itinerary details on the left and click "Run AI Price
+                  Prediction" to calculate instant pricing.</p>
               </div>
 
               <!-- Populated Prediction Result with Counter Animation -->
@@ -473,15 +564,19 @@
                 <div class="pred-price-main">
                   <span class="currency-sym">₹</span><span id="predictedPriceValue">--</span>
                 </div>
-                <p id="predRoutePill" style="font-size: 13px; color: var(--primary-blue); font-weight: 700;">DEL → BOM • Vistara • Economy</p>
+                <p id="predRoutePill" style="font-size: 13px; color: var(--primary-blue); font-weight: 700;">DEL → BOM •
+                  Vistara • Economy</p>
 
                 <!-- Book Now or Wait Recommendation Badge -->
-                <div id="advisorBadgeCard" style="margin: 14px 0; padding: 12px 14px; border-radius: 8px; border: 1px solid #E2E8F0; background: #F8FAFC; display: none;">
+                <div id="advisorBadgeCard"
+                  style="margin: 14px 0; padding: 12px 14px; border-radius: 8px; border: 1px solid #E2E8F0; background: #F8FAFC; display: none;">
                   <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                    <span style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase;">Booking Recommendation</span>
+                    <span style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase;">Booking
+                      Recommendation</span>
                     <span id="advisorBadgeAction" class="badge-tag emerald">BOOK NOW</span>
                   </div>
-                  <p id="advisorBadgeReason" style="font-size: 12.5px; color: #334155; margin: 0; line-height: 1.4;">Analyzing market patterns...</p>
+                  <p id="advisorBadgeReason" style="font-size: 12.5px; color: #334155; margin: 0; line-height: 1.4;">
+                    Analyzing market patterns...</p>
                 </div>
 
                 <div class="pred-range-grid">
@@ -496,24 +591,34 @@
                 </div>
 
                 <!-- Tree Spread Uncertainty -->
-                <div style="margin-top: 10px; padding: 10px 14px; background: #F1F5F9; border-radius: 8px; font-size: 12px; color: #475569; display: flex; justify-content: space-between;">
+                <div
+                  style="margin-top: 10px; padding: 10px 14px; background: #F1F5F9; border-radius: 8px; font-size: 12px; color: #475569; display: flex; justify-content: space-between;">
                   <span>Model Tree-to-Tree Uncertainty:</span>
                   <strong style="color: #0F172A;">±₹ <span id="predTreeSpread">--</span></strong>
                 </div>
 
                 <p class="pred-mae-note">
-                  Confidence interval computed with validation MAE: <strong>±₹ <span id="predMaeValue">1,293.06</span></strong>
+                  Confidence interval computed with validation MAE: <strong>±₹ <span
+                      id="predMaeValue">1,293.06</span></strong>
                 </p>
               </div>
 
               <!-- Quick Next Actions -->
               <div class="quick-action-strip" id="predictionNextActions" style="display: none;">
                 <div class="action-card-link" onclick="quickAnalyzeTrends()">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3v18h18" />
+                    <path d="m19 9-5 5-4-4-3 3" />
+                  </svg>
                   <span>View 50-Day Curve</span>
                 </div>
                 <div class="action-card-link" onclick="quickAnalyzeAlternatives()">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m16 3 4 4-4 4" />
+                    <path d="M20 7H4" />
+                    <path d="m8 21-4-4 4-4" />
+                    <path d="M4 17h16" />
+                  </svg>
                   <span>Find Cheaper Deals</span>
                 </div>
               </div>
@@ -529,17 +634,25 @@
              PAGE 3: BOOKING TRENDS
              ======================================================= -->
         <section class="page-view" id="page-trends">
-          
+
           <div class="page-header">
             <div>
               <h2 class="page-title">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 3v18h18" />
+                  <path d="m19 9-5 5-4-4-3 3" />
+                </svg>
                 Cheapest Time to Book Analysis
               </h2>
-              <p class="page-subtitle">Examine the full 50-day price trajectory for your route to discover the mathematically cheapest booking day.</p>
+              <p class="page-subtitle">Examine the full 50-day price trajectory for your route to discover the
+                mathematically cheapest booking day.</p>
             </div>
             <button class="btn btn-primary" id="runTrendAnalysisBtn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10" />
+                <polyline points="1 20 1 14 7 14" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              </svg>
               <span>Run Trend Analysis</span>
             </button>
           </div>
@@ -548,19 +661,27 @@
           <div class="trend-header-grid" id="trendSummaryStrip" style="display: none;">
             <div class="recommendation-pill-card animate-card">
               <div class="rec-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v20" />
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
               </div>
               <div class="rec-content">
                 <h4>Optimal Booking Recommendation</h4>
                 <div class="rec-days"><span id="recDaysVal">--</span> Days Prior to Departure</div>
-                <div class="rec-price">Lowest model predicted fare: <strong style="color: #047857;" id="recPriceVal">₹ --</strong></div>
+                <div class="rec-price">Lowest model predicted fare: <strong style="color: #047857;" id="recPriceVal">₹
+                    --</strong></div>
               </div>
             </div>
 
             <div class="card animate-card" style="padding: 18px 22px;">
-              <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Selected Journey</span>
-              <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); margin-top: 4px;" id="trendRouteLabel">Delhi → Mumbai</div>
-              <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;" id="trendParamLabel">Economy • Non-stop</div>
+              <span
+                style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Selected
+                Journey</span>
+              <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); margin-top: 4px;"
+                id="trendRouteLabel">Delhi → Mumbai</div>
+              <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;" id="trendParamLabel">Economy
+                • Non-stop</div>
             </div>
           </div>
 
@@ -585,23 +706,32 @@
              PAGE 4: CHEAPER ALTERNATIVES
              ======================================================= -->
         <section class="page-view" id="page-alternatives">
-          
+
           <div class="page-header">
             <div>
               <h2 class="page-title">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m16 3 4 4-4 4" />
+                  <path d="M20 7H4" />
+                  <path d="m8 21-4-4 4-4" />
+                  <path d="M4 17h16" />
+                </svg>
                 Cheaper Flight Alternatives
               </h2>
-              <p class="page-subtitle">Uncover lower-cost options by comparing alternative airlines, stops, and departure time windows.</p>
+              <p class="page-subtitle">Uncover lower-cost options by comparing alternative airlines, stops, and
+                departure time windows.</p>
             </div>
             <button class="btn btn-primary" id="runAlternativesBtn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
               <span>Scan Alternatives</span>
             </button>
           </div>
 
           <div class="alternatives-container">
-            
+
             <!-- Baseline Price Card -->
             <div class="benchmark-card animate-card" id="altBenchmarkCard">
               <div>
@@ -609,15 +739,21 @@
                 <div class="benchmark-val" id="altOriginalPrice">₹ 3,084.89</div>
               </div>
               <div style="text-align: right;">
-                <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Route Tested</div>
-                <div style="font-size: 15px; font-weight: 800; color: var(--primary-blue);" id="altRouteLabel">Delhi → Mumbai (Vistara)</div>
+                <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">
+                  Route Tested</div>
+                <div style="font-size: 15px; font-weight: 800; color: var(--primary-blue);" id="altRouteLabel">Delhi →
+                  Mumbai (Vistara)</div>
               </div>
             </div>
 
             <!-- Group 1: Cheaper Airlines -->
             <div>
-              <h3 style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+              <h3
+                style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
+                </svg>
                 Cheaper Airline Carriers
               </h3>
               <div class="alternatives-grid" id="airlineAlternativesGrid">
@@ -627,8 +763,12 @@
 
             <!-- Group 2: Cheaper Stops -->
             <div>
-              <h3 style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <h3
+                style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v6l4 2" />
+                </svg>
                 Alternative Stop Configurations
               </h3>
               <div class="alternatives-grid" id="stopsAlternativesGrid">
@@ -638,8 +778,17 @@
 
             <!-- Group 3: Cheaper Departure Times -->
             <div>
-              <h3 style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/></svg>
+              <h3
+                style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2" />
+                  <path d="M12 20v2" />
+                  <path d="m4.93 4.93 1.41 1.41" />
+                  <path d="m17.66 17.66 1.41 1.41" />
+                  <path d="M2 12h2" />
+                  <path d="M20 12h2" />
+                </svg>
                 Alternative Departure Time Windows
               </h3>
               <div class="alternatives-grid" id="timesAlternativesGrid">
@@ -656,20 +805,25 @@
              PAGE 5: FARE INSIGHTS
              ======================================================= -->
         <section class="page-view" id="page-insights">
-          
+
           <div class="page-header">
             <div>
               <h2 class="page-title">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" x2="18" y1="20" y2="10" />
+                  <line x1="12" x2="12" y1="20" y2="4" />
+                  <line x1="6" x2="6" y1="20" y2="14" />
+                </svg>
                 Market & Model Fare Insights
               </h2>
-              <p class="page-subtitle">Deep analytical overview derived from the 300K+ sample dataset and Random Forest feature splits.</p>
+              <p class="page-subtitle">Deep analytical overview derived from the 300K+ sample dataset and Random Forest
+                feature splits.</p>
             </div>
           </div>
 
           <!-- Insights Row 1 -->
           <div class="insights-grid-2col">
-            
+
             <!-- Top Model Feature Importance -->
             <div class="card chart-card-lg animate-card">
               <div class="card-header">
@@ -700,7 +854,7 @@
 
           <!-- Insights Row 2 -->
           <div class="insights-grid-2col">
-            
+
             <!-- Key Indian Flight Corridors -->
             <div class="card chart-card-lg animate-card">
               <div class="card-header">
@@ -736,11 +890,15 @@
              PAGE 6: ABOUT AND METHODOLOGY
              ======================================================= -->
         <section class="page-view" id="page-about">
-          
+
           <div class="page-header">
             <div>
               <h2 class="page-title">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4" />
+                  <path d="M12 8h.01" />
+                </svg>
                 About Platform & ML Methodology
               </h2>
               <p class="page-subtitle">Technical architecture, data science pipeline, and transparency reporting.</p>
@@ -748,30 +906,40 @@
           </div>
 
           <div class="about-grid">
-            
+
             <!-- Left: Methodology details -->
             <div class="about-content-section">
-              
+
               <div class="card animate-card">
-                <h3 style="font-size: 18px; color: var(--text-primary); margin-bottom: 12px; font-weight: 800;">Problem Statement & Objective</h3>
+                <h3 style="font-size: 18px; color: var(--text-primary); margin-bottom: 12px; font-weight: 800;">Problem
+                  Statement & Objective</h3>
                 <div class="prose">
                   <p>
-                    Airline ticket pricing in India exhibits severe volatility governed by dynamic yield management algorithms. Passengers often struggle to assess whether a current fare represents good value or whether booking earlier or with an alternative carrier yields significant savings.
+                    Airline ticket pricing in India exhibits severe volatility governed by dynamic yield management
+                    algorithms. Passengers often struggle to assess whether a current fare represents good value or
+                    whether booking earlier or with an alternative carrier yields significant savings.
                   </p>
                   <p>
-                    AeroMetrics solves this by providing a unified machine learning intelligence dashboard that computes estimated ticket valuations, maps out 50-day booking trends, and identifies cheaper flight permutations.
+                    AeroMetrics solves this by providing a unified machine learning intelligence dashboard that computes
+                    estimated ticket valuations, maps out 50-day booking trends, and identifies cheaper flight
+                    permutations.
                   </p>
                 </div>
               </div>
 
               <div class="card animate-card">
-                <h3 style="font-size: 18px; color: var(--text-primary); margin-bottom: 16px; font-weight: 800;">Machine Learning Pipeline Architecture</h3>
-                
+                <h3 style="font-size: 18px; color: var(--text-primary); margin-bottom: 16px; font-weight: 800;">Machine
+                  Learning Pipeline Architecture</h3>
+
                 <div class="pipeline-step">
                   <div class="step-num">1</div>
                   <div class="step-info">
                     <h4>Data Preprocessing & Encoding</h4>
-                    <p>Categorical variables (<code>airline</code>, <code>source_city</code>, <code>destination_city</code>, <code>departure_time</code>, <code>arrival_time</code>, <code>class</code>) are transformed via Scikit-Learn <code>OneHotEncoder</code>. Numerical features (<code>duration</code>, <code>days_left</code>, <code>stops</code>) undergo <code>StandardScaler</code> scaling.</p>
+                    <p>Categorical variables (<code>airline</code>, <code>source_city</code>,
+                      <code>destination_city</code>, <code>departure_time</code>, <code>arrival_time</code>,
+                      <code>class</code>) are transformed via Scikit-Learn <code>OneHotEncoder</code>. Numerical
+                      features (<code>duration</code>, <code>days_left</code>, <code>stops</code>) undergo
+                      <code>StandardScaler</code> scaling.</p>
                   </div>
                 </div>
 
@@ -779,7 +947,8 @@
                   <div class="step-num">2</div>
                   <div class="step-info">
                     <h4>Model Architecture (Random Forest Regressor)</h4>
-                    <p>Ensemble of 100 decision trees constructed to capture non-linear airfare dynamics and multi-variable interactions (e.g. cabin class vs airline tier, duration vs stop penalty).</p>
+                    <p>Ensemble of 100 decision trees constructed to capture non-linear airfare dynamics and
+                      multi-variable interactions (e.g. cabin class vs airline tier, duration vs stop penalty).</p>
                   </div>
                 </div>
 
@@ -787,7 +956,8 @@
                   <div class="step-num">3</div>
                   <div class="step-info">
                     <h4>Serving via Asynchronous FastAPI</h4>
-                    <p>High-performance ASGI backend serving REST endpoints for single-point prediction, 50-interval booking curves, and multi-airline alternative optimization.</p>
+                    <p>High-performance ASGI backend serving REST endpoints for single-point prediction, 50-interval
+                      booking curves, and multi-airline alternative optimization.</p>
                   </div>
                 </div>
               </div>
@@ -795,13 +965,17 @@
               <!-- Disclaimer Card -->
               <div class="disclaimer-banner animate-card" style="margin-bottom: 0;">
                 <svg class="disclaimer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-                  <line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/>
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                  <line x1="12" x2="12" y1="9" y2="13" />
+                  <line x1="12" x2="12.01" y1="17" y2="17" />
                 </svg>
                 <div class="disclaimer-content">
                   <h4>Transparency & Dataset Timeframe Disclaimer</h4>
                   <p>
-                    This platform operates exclusively on historical flight booking data collected between <strong>February 11, 2022 and March 31, 2022</strong> (50 days). Predictions represent algorithmic estimations based on historical pricing patterns and must not be construed as live booking quotes or active airline reservations.
+                    This platform operates exclusively on historical flight booking data collected between
+                    <strong>February 11, 2022 and March 31, 2022</strong> (50 days). Predictions represent algorithmic
+                    estimations based on historical pricing patterns and must not be construed as live booking quotes or
+                    active airline reservations.
                   </p>
                 </div>
               </div>
@@ -810,8 +984,9 @@
 
             <!-- Right: Technical Specs Sidebar -->
             <div class="card animate-card" style="height: fit-content;">
-              <h3 style="font-size: 16px; color: var(--text-primary); margin-bottom: 16px; font-weight: 800;">Model Specifications</h3>
-              
+              <h3 style="font-size: 16px; color: var(--text-primary); margin-bottom: 16px; font-weight: 800;">Model
+                Specifications</h3>
+
               <div class="spec-list">
                 <div class="spec-row">
                   <span class="spec-key">Algorithm</span>
@@ -871,4 +1046,5 @@
   <script src="script.js?v=1795150702"></script>
 
 </body>
+
 </html>

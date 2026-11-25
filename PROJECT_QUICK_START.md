@@ -6,18 +6,42 @@ Welcome to the **Smart Flight Booking Assistant** (AeroMetrics). Follow this gui
 
 ## 1. Quick Launch with Double-Click (Recommended)
 
-Simply double-click the included batch script in the project root:
+Simply double-click the primary batch script in the project root:
 
 ```cmd
 run.bat
 ```
 
 ### What `run.bat` does automatically:
-1. Detects your Python environment (uses virtual environment `venv` if present, otherwise system Python).
-2. Cleans up any stale processes occupying ports `8000` or `5500`.
-3. Launches the **FastAPI Backend** on `http://127.0.0.1:8000`.
-4. Launches the **Frontend HTTP Server** on `http://127.0.0.1:5500`.
-5. Opens `http://127.0.0.1:5500/index.html` in your default web browser.
+1. **Intelligent Python Detection:** Verifies whether `venv\Scripts\python.exe` is functional. If it was created under another user or machine path, it automatically falls back to your functional system Python or Windows `py` launcher.
+2. **Dependency Verification:** Pre-checks that `fastapi`, `uvicorn`, `pandas`, `joblib`, and `scikit-learn` are installed.
+3. **Port Conflict Cleanup:** Automatically releases any stale processes occupying ports `8000` or `5500`.
+4. **Launches FastAPI Backend:** Starts the backend on `http://127.0.0.1:8000`.
+5. **Launches Frontend HTTP Server:** Serves UI on `http://127.0.0.1:5500`.
+6. **Health Verification Polling:** Polls `http://127.0.0.1:8000/health` up to 12 seconds until the model and API are confirmed live.
+7. **Browser Launch:** Opens `http://127.0.0.1:5500/index.html` in your default browser.
+
+---
+
+## 2. Startup Diagnostics Utility
+
+If you ever experience issues launching the application, run:
+
+```cmd
+BAT_DIAGNOSTICS.bat
+```
+
+This diagnostic script runs 8 automated tests:
+1. Python interpreter execution.
+2. Critical dependency imports.
+3. Project script availability.
+4. Model PKL file existence.
+5. Duration lookup table existence.
+6. FastAPI backend app importability.
+7. Port 8000 & 5500 availability.
+8. Render deployment configuration integrity.
+
+It prints `[PASS]` or `[FAIL]` for each component and summarizes system readiness.
 
 ---
 
