@@ -695,6 +695,86 @@ def book_now_or_wait_advisor(flight: FlightDetails):
         "currency": "INR"
     }
 
+# ==========================================
+# FARE PATTERN INSIGHTS (PHASE 2 REQUIREMENT)
+# ==========================================
+@app.get("/fare-insights")
+def get_fare_insights():
+    """
+    Returns empirical benchmarks and feature importances calculated directly
+    from the active Random Forest V2 pipeline for the Insights Dashboard.
+    """
+    # 1. Feature importance
+    rf_model = model.named_steps["model"]
+    preprocessor = model.named_steps["preprocessor"]
+    feature_names = preprocessor.get_feature_names_out()
+    importances = rf_model.feature_importances_
+
+    fi_list = [
+        {"feature": str(f).replace("cat__", "").replace("num__", "").capitalize(), "importance": round(float(imp) * 100, 2)}
+        for f, imp in sorted(zip(feature_names, importances), key=lambda x: x[1], reverse=True)[:10]
+    ]
+
+    # 2. Airline & Cabin Class benchmarks (DEL -> BOM, 15 days, Morning, Direct)
+    airlines = AVAILABLE_OPTIONS["airlines"]
+    airline_comp = []
+    for air in airlines:
+        df_eco = pd.DataFrame([{
+            "airline": air, "source_city": "Delhi", "departure_time": "Morning",
+            "stops": "zero", "arrival_time": "Afternoon", "destination_city": "Mumbai",
+            "class": "Economy", "duration": 2.17, "days_left": 15
+        }])
+        df_biz = pd.DataFrame([{
+            "airline": air, "source_city": "Delhi", "departure_time": "Morning",
+            "stops": "zero", "arrival_time": "Afternoon", "destination_city": "Mumbai",
+            "class": "Business", "duration": 2.17, "days_left": 15
+        }])
+        p_eco = round(float(model.predict(df_eco)[0]), 2)
+        p_biz = round(float(model.predict(df_biz)[0]), 2)
+        airline_comp.append({"airline": air, "economy": p_eco, "business": p_biz})
+
+    # 3. Route comparisons
+    sample_routes = [
+        ("Delhi", "Mumbai"), ("Mumbai", "Bangalore"), ("Delhi", "Bangalore"),
+        ("Bangalore", "Kolkata"), ("Delhi", "Chennai"), ("Kolkata", "Hyderabad")
+    ]
+    route_comp = []
+    for s, d in sample_routes:
+        calc = calculate_duration_and_arrival(s, d, "zero", "Morning")
+        df_r = pd.DataFrame([{
+            "airline": "Vistara", "source_city": s, "departure_time": "Morning",
+            "stops": "zero", "arrival_time": calc["arrival_time"], "destination_city": d,
+            "class": "Economy", "duration": calc["duration"], "days_left": 15
+        }])
+        p_r = round(float(model.predict(df_r)[0]), 2)
+        route_comp.append({"route": f"{s} → {d}", "price": p_r, "duration_hours": calc["duration"]})
+
+    # 4. Stops impact comparison (DEL -> BOM)
+    stops_comp = []
+    for st_label, st_val in [("Non-stop (Direct)", "zero"), ("1 Stop", "one"), ("2 or More Stops", "two_or_more")]:
+        calc = calculate_duration_and_arrival("Delhi", "Mumbai", st_val, "Morning")
+        df_s = pd.DataFrame([{
+            "airline": "Vistara", "source_city": "Delhi", "departure_time": "Morning",
+            "stops": st_val, "arrival_time": calc["arrival_time"], "destination_city": "Mumbai",
+            "class": "Economy", "duration": calc["duration"], "days_left": 15
+        }])
+        p_s = round(float(model.predict(df_s)[0]), 2)
+        stops_comp.append({"stops": st_label, "price": p_s})
+
+    return {
+        "model_metadata": {
+            "model_pipeline": "flight_price_rf_pipeline_v2.pkl",
+            "mae": TEST_MAE,
+            "rmse": TEST_RMSE,
+            "r2": TEST_R2,
+            "includes_duration": True
+        },
+        "feature_importance": fi_list,
+        "airline_comparison": airline_comp,
+        "route_comparison": route_comp,
+        "stops_comparison": stops_comp
+    }
+
 
 # Book-Now-or-Wait Advisor
 @app.post("/book-now-or-wait")
@@ -753,4 +833,84 @@ def book_now_or_wait_advisor(flight: FlightDetails):
         "cheapest_overall_days_left": trend_result["cheapest_days_left"],
         "savings_potential": savings_potential,
         "currency": "INR"
+    }
+
+# ==========================================
+# FARE PATTERN INSIGHTS (PHASE 2 REQUIREMENT)
+# ==========================================
+@app.get("/fare-insights")
+def get_fare_insights():
+    """
+    Returns empirical benchmarks and feature importances calculated directly
+    from the active Random Forest V2 pipeline for the Insights Dashboard.
+    """
+    # 1. Feature importance
+    rf_model = model.named_steps["model"]
+    preprocessor = model.named_steps["preprocessor"]
+    feature_names = preprocessor.get_feature_names_out()
+    importances = rf_model.feature_importances_
+
+    fi_list = [
+        {"feature": str(f).replace("cat__", "").replace("num__", "").capitalize(), "importance": round(float(imp) * 100, 2)}
+        for f, imp in sorted(zip(feature_names, importances), key=lambda x: x[1], reverse=True)[:10]
+    ]
+
+    # 2. Airline & Cabin Class benchmarks (DEL -> BOM, 15 days, Morning, Direct)
+    airlines = AVAILABLE_OPTIONS["airlines"]
+    airline_comp = []
+    for air in airlines:
+        df_eco = pd.DataFrame([{
+            "airline": air, "source_city": "Delhi", "departure_time": "Morning",
+            "stops": "zero", "arrival_time": "Afternoon", "destination_city": "Mumbai",
+            "class": "Economy", "duration": 2.17, "days_left": 15
+        }])
+        df_biz = pd.DataFrame([{
+            "airline": air, "source_city": "Delhi", "departure_time": "Morning",
+            "stops": "zero", "arrival_time": "Afternoon", "destination_city": "Mumbai",
+            "class": "Business", "duration": 2.17, "days_left": 15
+        }])
+        p_eco = round(float(model.predict(df_eco)[0]), 2)
+        p_biz = round(float(model.predict(df_biz)[0]), 2)
+        airline_comp.append({"airline": air, "economy": p_eco, "business": p_biz})
+
+    # 3. Route comparisons
+    sample_routes = [
+        ("Delhi", "Mumbai"), ("Mumbai", "Bangalore"), ("Delhi", "Bangalore"),
+        ("Bangalore", "Kolkata"), ("Delhi", "Chennai"), ("Kolkata", "Hyderabad")
+    ]
+    route_comp = []
+    for s, d in sample_routes:
+        calc = calculate_duration_and_arrival(s, d, "zero", "Morning")
+        df_r = pd.DataFrame([{
+            "airline": "Vistara", "source_city": s, "departure_time": "Morning",
+            "stops": "zero", "arrival_time": calc["arrival_time"], "destination_city": d,
+            "class": "Economy", "duration": calc["duration"], "days_left": 15
+        }])
+        p_r = round(float(model.predict(df_r)[0]), 2)
+        route_comp.append({"route": f"{s} → {d}", "price": p_r, "duration_hours": calc["duration"]})
+
+    # 4. Stops impact comparison (DEL -> BOM)
+    stops_comp = []
+    for st_label, st_val in [("Non-stop (Direct)", "zero"), ("1 Stop", "one"), ("2 or More Stops", "two_or_more")]:
+        calc = calculate_duration_and_arrival("Delhi", "Mumbai", st_val, "Morning")
+        df_s = pd.DataFrame([{
+            "airline": "Vistara", "source_city": "Delhi", "departure_time": "Morning",
+            "stops": st_val, "arrival_time": calc["arrival_time"], "destination_city": "Mumbai",
+            "class": "Economy", "duration": calc["duration"], "days_left": 15
+        }])
+        p_s = round(float(model.predict(df_s)[0]), 2)
+        stops_comp.append({"stops": st_label, "price": p_s})
+
+    return {
+        "model_metadata": {
+            "model_pipeline": "flight_price_rf_pipeline_v2.pkl",
+            "mae": TEST_MAE,
+            "rmse": TEST_RMSE,
+            "r2": TEST_R2,
+            "includes_duration": True
+        },
+        "feature_importance": fi_list,
+        "airline_comparison": airline_comp,
+        "route_comparison": route_comp,
+        "stops_comparison": stops_comp
     }

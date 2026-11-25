@@ -1,117 +1,129 @@
 {
   "model_metadata": {
-    "pkl_filename": "flight_price_rf_pipeline.pkl",
-    "model_type": "sklearn.pipeline.Pipeline (RandomForestRegressor + ColumnTransformer)",
-    "includes_duration": true,
-    "dataset_benchmark": "DEL \u2192 BOM, 25 Days Window, Morning Departure, Non-stop Direct"
+    "model_pipeline": "flight_price_rf_pipeline_v2.pkl",
+    "mae": 1293.06,
+    "rmse": 2841.19,
+    "r2": 0.9843,
+    "includes_duration": true
   },
-  "feature_importance": {
-    "features": [
-      "cat__class_Economy",
-      "cat__class_Business",
-      "num__duration",
-      "cat__airline_Vistara",
-      "num__days_left",
-      "num__stops",
-      "cat__airline_Air_India",
-      "cat__airline_Indigo",
-      "cat__source_city_Delhi",
-      "cat__destination_city_Delhi"
-    ],
-    "importance": [
-      49.99,
-      35.02,
-      4.13,
-      3.76,
-      1.39,
-      1.27,
-      0.87,
-      0.38,
-      0.31,
-      0.24
-    ]
-  },
+  "feature_importance": [
+    {
+      "feature": "Class_economy",
+      "importance": 53.16
+    },
+    {
+      "feature": "Class_business",
+      "importance": 35.43
+    },
+    {
+      "feature": "Duration",
+      "importance": 5.56
+    },
+    {
+      "feature": "Days_left",
+      "importance": 1.6
+    },
+    {
+      "feature": "Airline_air_india",
+      "importance": 0.57
+    },
+    {
+      "feature": "Airline_vistara",
+      "importance": 0.44
+    },
+    {
+      "feature": "Source_city_delhi",
+      "importance": 0.38
+    },
+    {
+      "feature": "Destination_city_delhi",
+      "importance": 0.34
+    },
+    {
+      "feature": "Source_city_mumbai",
+      "importance": 0.23
+    },
+    {
+      "feature": "Destination_city_kolkata",
+      "importance": 0.18
+    }
+  ],
   "airline_comparison": [
     {
       "airline": "AirAsia",
-      "economy": 2663.76,
-      "business": 24287.7
+      "economy": 4579.37,
+      "business": 27514.37
     },
     {
       "airline": "Air India",
-      "economy": 2481.57,
-      "business": 22454.65
+      "economy": 2575.85,
+      "business": 27514.37
     },
     {
-      "airline": "GO FIRST",
-      "economy": 2410.98,
-      "business": 24199.0
+      "airline": "GO_FIRST",
+      "economy": 2427.68,
+      "business": 27514.37
     },
     {
       "airline": "Indigo",
-      "economy": 2725.07,
-      "business": 23590.04
+      "economy": 3431.2,
+      "business": 27514.37
     },
     {
       "airline": "SpiceJet",
-      "economy": 2625.0,
-      "business": 24206.4
+      "economy": 2594.38,
+      "business": 27514.37
     },
     {
       "airline": "Vistara",
-      "economy": 2738.83,
-      "business": 33305.49
+      "economy": 2675.32,
+      "business": 34525.71
     }
   ],
   "route_comparison": [
     {
       "route": "Delhi \u2192 Mumbai",
-      "price": 2738.83,
+      "price": 2675.32,
       "duration_hours": 2.17
     },
     {
       "route": "Mumbai \u2192 Bangalore",
-      "price": 2074.0,
+      "price": 5106.49,
       "duration_hours": 1.75
     },
     {
-      "route": "Chennai \u2192 Delhi",
-      "price": 2692.73,
+      "route": "Delhi \u2192 Bangalore",
+      "price": 4501.0,
       "duration_hours": 2.75
-    },
-    {
-      "route": "Hyderabad \u2192 Mumbai",
-      "price": 3646.0,
-      "duration_hours": 1.5
-    },
-    {
-      "route": "Delhi \u2192 Kolkata",
-      "price": 4022.26,
-      "duration_hours": 2.25
     },
     {
       "route": "Bangalore \u2192 Kolkata",
-      "price": 4117.13,
+      "price": 5468.73,
       "duration_hours": 2.5
     },
     {
-      "route": "Delhi \u2192 Bangalore",
-      "price": 4503.06,
-      "duration_hours": 2.75
+      "route": "Delhi \u2192 Chennai",
+      "price": 6070.13,
+      "duration_hours": 2.83
+    },
+    {
+      "route": "Kolkata \u2192 Hyderabad",
+      "price": 6884.49,
+      "duration_hours": 2.25
     }
   ],
   "stops_comparison": [
     {
       "stops": "Non-stop (Direct)",
-      "price": 2738.83
+      "price": 2675.32
     },
     {
       "stops": "1 Stop",
-      "price": 5336.17
+      "price": 6075.05
     },
     {
       "stops": "2 or More Stops",
-      "price": 8336.14
+      "price": 15597.13
     }
   ]
 }
