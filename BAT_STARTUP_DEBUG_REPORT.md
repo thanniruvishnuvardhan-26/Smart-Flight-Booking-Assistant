@@ -1,156 +1,187 @@
-# BAT Startup Debugging & Local Execution Resolution Report
-
-**Project Name:** Smart Flight Booking Assistant  
-**Repository:** `Smart-Flight-Booking-Assistant`  
-**Author:** AI Engineering Assistant  
-**Date:** November 25, 2026  
-**Status:** FULLY RESOLVED & OPERATIONAL
-
----
-
-## 1. Executive Summary & Problem Overview
-Following the deployment of the Smart Flight Booking Assistant on Render, local startup via the primary batch script (`run.bat`) failed. The user reported that executing the BAT file did not result in a running local application.
-
-Our investigation uncovered the exact root causes, separated local development from the cloud deployment architecture, made `run.bat` resilient to virtual environment breakages, implemented automated health check polling, created a dedicated startup diagnostic utility (`BAT_DIAGNOSTICS.bat`), and verified all services end-to-end.
+# Final Audit & Verification Report — Smart Flight Booking Assistant
+**Document:** BAT Startup, ML Model Compatibility, and Render Deployment Final Audit  
+**Project:** Smart Flight Booking Assistant  
+**Repository:** [thanniruvishnuvardhan-26/Smart-Flight-Booking-Assistant](https://github.com/thanniruvishnuvardhan-26/Smart-Flight-Booking-Assistant)  
+**Audit Date:** November 25, 2026  
+**Auditor:** Antigravity AI Engineering Assistant  
+**Verdict:** **ALL SYSTEMS VERIFIED & OPERATIONAL (LOCAL & RENDER)**
 
 ---
 
-## 2. Root Cause Analysis
+## 1. Render Deployment URL Verification
 
-### Root Cause 1: Broken Hardcoded Paths in Virtual Environment (`venv/pyvenv.cfg`)
-- **Evidence:**
-  `Smart_Flight_Booking_Assistant/venv/pyvenv.cfg` contained:
-  ```ini
-  home = C:\Users\bse70\AppData\Local\Programs\Python\Python313
-  executable = C:\Users\bse70\AppData\Local\Programs\Python\Python313\python.exe
-  command = C:\Users\bse70\AppData\Local\Programs\Python\Python313\python.exe -m venv C:\Users\bse70\OneDrive\Desktop\Smart_Flight_Booking_Assistant\venv
+### Audit Methodology
+We performed live network requests directly to both candidate URLs:
+1. `https://smart-flight-booking-assistant.onrender.com`
+2. `https://smart-flight-booking-assistant-16wy.onrender.com`
+
+### Empirical Test Results
+| Endpoint Tested | Candidate A: `smart-flight-booking-assistant.onrender.com` | Candidate B: `smart-flight-booking-assistant-16wy.onrender.com` | Verified Status |
+| :--- | :--- | :--- | :--- |
+| **`GET /`** | Connection Timeout (Unreachable / Expired slug) | **HTTP 200 OK** (`{"version": "2.0", "health": "healthy"}`) | **Active & Live** |
+| **`GET /health`** | Connection Timeout | **HTTP 200 OK** (`{"status": "healthy", "model_version": "v2"}`) | **Active & Live** |
+| **`GET /docs`** | Connection Timeout | **HTTP 200 OK** (Interactive Swagger UI) | **Active & Live** |
+| **`POST /predict`** | Connection Timeout | **HTTP 200 OK** (`predicted_price: ₹ 2,675.32`) | **Active & Live** |
+| **CORS Header** | N/A | `access-control-allow-origin: <origin>` (`allow_credentials=True`) | **Fully Compliant** |
+
+### Verified Correction
+- **True Production URL:** `https://smart-flight-booking-assistant-16wy.onrender.com`
+- **Action Taken:** Updated `frontend/script.js` so `PRODUCTION_API_URL` points directly to `https://smart-flight-booking-assistant-16wy.onrender.com`.
+- **Automatic Fallback:** When running locally via `127.0.0.1` or `localhost`, `frontend/script.js` automatically routes to `http://127.0.0.1:8000`.
+
+---
+
+## 2. Machine Learning Model Compatibility Audit (`flight_price_rf_pipeline_v2.pkl`)
+
+We inspected `backend/flight_price_rf_pipeline_v2.pkl` using Scikit-Learn and Pandas:
+
+### A. Feature Inclusion Audit
+- **Pipeline Structure:**
+  - `preprocessor` (`sklearn.compose.ColumnTransformer`)
+  - `model` (`sklearn.ensemble.RandomForestRegressor`, 30 estimators, max depth 20, random_state 42)
+- **Numerical Features (StandardScaler):**
+  - **`['duration', 'days_left']`**
+  - **Confirmed:** `duration` is **explicitly included and scaled**, satisfying the core requirement that duration remains an active model feature.
+- **Categorical Features (OneHotEncoder):**
+  - `['airline', 'source_city', 'departure_time', 'arrival_time', 'destination_city', 'class', 'stops']`
+  - Total encoded features: **37 features**.
+
+### B. Stops Preprocessing Compatibility
+- `stops` is processed with `OneHotEncoder` across categories `['zero', 'one', 'two_or_more']`.
+- The backend `main.py` contains the `normalize_stops_value()` adapter:
+  - Input `0` / `"0"` / `"zero"` / `"non-stop"` $\to$ `"zero"`
+  - Input `1` / `"1"` / `"one"` $\to$ `"one"`
+  - Input `2` / `"2"` / `"two_or_more"` $\to$ `"two_or_more"`
+- Both integer and string payloads operate with zero transformation errors.
+
+### C. Feature Importance Alignment
+Extracted directly from the pipeline's 30 decision trees:
+1. `cat__class_Economy`: **53.16%**
+2. `cat__class_Business`: **35.43%**
+3. `num__duration`: **5.56%**
+4. `num__days_left`: **1.60%**
+5. `cat__airline_Air_India`: **0.57%**
+6. `cat__airline_Vistara`: **0.44%**
+7. `cat__source_city_Delhi`: **0.38%**
+8. `cat__destination_city_Delhi`: **0.34%**
+- **Alignment:** Identical features and importances serve both the prediction engine (`/predict`) and the Fare Insights dashboard (`/feature-importance`).
+
+---
+
+## 3. Local Startup & BAT File Verification (`run.bat`)
+
+### Root Cause of Previous BAT Failures
+1. **Broken Virtual Environment Base:** `Smart_Flight_Booking_Assistant/venv/pyvenv.cfg` pointed to `C:\Users\bse70\AppData\Local\Programs\Python\Python313\python.exe` (a different user account on another machine). Invoking `venv\Scripts\python.exe` aborted with "The system cannot find the path specified."
+2. **Batch Parser Syntax Errors:** Unescaped parentheses inside `for /f` and `if exist` loops caused cmd syntax crashes (`. was unexpected at this time`).
+3. **Timeout vs. Redirection Error:** `timeout /t 1 >nul` inside background batch loops failed with `ERROR: Input redirection is not supported`.
+
+### Corrections Made in `run.bat`
+1. **Executable Validation:** `run.bat` tests `venv\Scripts\python.exe -c "import sys"`. If invalid, it seamlessly falls back to the working system Python (`C:\Users\thann\AppData\Local\Programs\Python\Python314\python.exe`).
+2. **Safe Syntax:** Escaped cmd delimiters and clean variable expansion.
+3. **Python Sleep:** Replaced `timeout /t 1` with `"!PYTHON_EXE!" -c "import time; time.sleep(1)"` inside the health check loop.
+4. **Port Management:** Releases stale processes on port 8000 and 5500 cleanly before binding.
+5. **Dynamic Health Polling:** Polls `http://127.0.0.1:8000/health` up to 12 times and opens `http://127.0.0.1:5500/index.html` only when confirmed responsive.
+
+### Live Execution Test Output (`run.bat`)
+```
+========================================================
+       SMART FLIGHT BOOKING ASSISTANT LAUNCHER
+========================================================
+
+[*] Project Root: c:\Users\thann\OneDrive\Desktop\Airfare prediction\Smart_Flight_Booking_Assistant
+[NOTICE] venv\Scripts\python.exe is invalid on this machine. Falling back...
+[*] Using system Python
+[*] Verifying essential packages (fastapi, uvicorn, pandas, joblib, sklearn)...
+[*] All required Python dependencies verified.
+[*] ML Model file verified.
+
+[*] Checking port availability...
+
+[1/3] Starting FastAPI Backend on port 8000...
+[2/3] Starting Frontend Server on port 5500...
+[3/3] Waiting for backend services to respond...
+[*] Backend health check PASSED - http://127.0.0.1:8000/health is responsive.
+
+========================================================
+  SUCCESS: All Services Are Live
+  Frontend Web App : http://127.0.0.1:5500/index.html
+  FastAPI Backend  : http://127.0.0.1:8000
+  Interactive Docs : http://127.0.0.1:8000/docs
+========================================================
+
+Launching default web browser...
+```
+
+---
+
+## 4. Render Deployment Verification
+
+### Cloud Configuration Inspection
+- **`render.yaml`:**
+  ```yaml
+  services:
+    - type: web
+      name: smart-flight-booking-assistant
+      runtime: python
+      buildCommand: pip install -r requirements.txt
+      startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+      envVars:
+        - key: PYTHON_VERSION
+          value: 3.11.9
   ```
-- **Analysis:**
-  The `venv` was created on a different computer/user account (`bse70`). When `venv\Scripts\python.exe` was invoked on the current machine (`thann`), it attempted to execute `C:\Users\bse70\AppData\Local\Programs\Python\Python313\python.exe`, which did not exist:
+  - Port binding `$PORT` is respected.
+  - Entry point `backend.main:app` is valid.
+  - Root proxy `main.py` is present (`from backend.main import app`) to ensure compatibility with either root or subfolder module resolvers.
+
+### Live Live Production Prediction Test
+Tested via `urllib.request` with an external `Origin: https://example.com` header:
+- **HTTP Status:** `200 OK`
+- **CORS Header Returned:** `access-control-allow-origin: https://example.com`
+- **Prediction Payload Tested:**
+  ```json
+  {
+    "airline": "Vistara",
+    "source_city": "Delhi",
+    "departure_time": "Morning",
+    "stops": "zero",
+    "destination_city": "Mumbai",
+    "flight_class": "Economy",
+    "days_left": 15
+  }
   ```
-  did not find executable at 'C:\Users\bse70\AppData\Local\Programs\Python\Python313\python.exe': The system cannot find the path specified.
+- **Prediction Returned:**
+  ```json
+  {
+    "predicted_price": 2675.32,
+    "lower_price": 1382.26,
+    "upper_price": 3968.38,
+    "mae": 1293.06,
+    "tree_uncertainty": 278.66,
+    "effective_duration": 2.17,
+    "effective_arrival_time": "Afternoon",
+    "crosses_midnight": false,
+    "currency": "INR"
+  }
   ```
-- **Impact on Previous BAT File:**
-  The original BAT file blindly checked `if exist "venv\Scripts\python.exe" set PYTHON_EXE=venv\Scripts\python.exe`. Because the file existed as a stub, the script selected it and subsequently failed every Python invocation silently or aborted immediately when launching Uvicorn and the frontend.
-
-### Root Cause 2: Lack of Python Environment Validation and Fallback
-- The previous BAT script lacked fallback logic. On the current computer, Python 3.14 (`C:\Users\thann\AppData\Local\Programs\Python\Python314\python.exe`) is installed and has all dependencies (`fastapi`, `uvicorn`, `pandas`, `joblib`, `scikit-learn`, `pydantic`) installed.
-- The BAT file never tested whether the chosen Python interpreter could execute before trying to start services.
-
-### Root Cause 3: Fixed Sleep Timer vs. True Health Check
-- The previous BAT script ran `timeout /t 3 /nobreak` and immediately launched the browser, assuming the backend was ready.
-- If the backend was still loading the Random Forest pipeline or failed to start, the browser opened to a blank/connection error screen with no feedback to the user.
-
-### Root Cause 4: Render vs. Local URL Coupling in Frontend
-- While `render.yaml` was introduced for cloud deployment (`uvicorn backend.main:app --host 0.0.0.0 --port $PORT`), the frontend needed clean detection to ensure local execution always connects to `http://127.0.0.1:8000` while production deployments connect to the Render backend URL.
 
 ---
 
-## 3. Files Modified & Changes Implemented
+## 5. Audit Summary Matrix
 
-### 1. `run.bat` (Completely Rewritten & Hardened)
-- **Interpreter Execution Validation:**
-  Tests `venv\Scripts\python.exe` with a test execution command (`-c "import sys"`). If broken or pointing to a missing base path, it automatically falls back to system Python or the Windows `py` launcher.
-- **Dependency Self-Check:**
-  Pre-validates that `fastapi`, `uvicorn`, `pandas`, `joblib`, and `sklearn` can be imported by the chosen interpreter before starting processes.
-- **Model File Verification:**
-  Verifies that either `flight_price_rf_pipeline_v2.pkl` or `flight_price_rf_pipeline.pkl` exists in `backend/`.
-- **Safe Port Release:**
-  Checks for stale processes on port 8000 (FastAPI) and port 5500 (frontend HTTP server) and releases them cleanly.
-- **Dynamic Polling Health Loop:**
-  Polls `http://127.0.0.1:8000/health` up to 12 times (1-second intervals). Only after receiving HTTP 200 does it open the browser, ensuring zero race conditions.
-- **Visible Error Reporting:**
-  Console windows remain open with informative error logs if any service encounters an exception.
-
-### 2. `BAT_DIAGNOSTICS.bat` (New Diagnostic Utility)
-A stand-alone, non-destructive script that performs 8 system checks:
-1. Python Interpreter accessibility and executable status.
-2. Critical dependencies (`fastapi`, `uvicorn`, `pydantic`, `pandas`, `joblib`, `sklearn`).
-3. Key project scripts (`backend/main.py`, `frontend/index.html`, `frontend/script.js`, `frontend/serve.py`).
-4. Machine learning model (`flight_price_rf_pipeline_v2.pkl`).
-5. Duration lookup table (`backend/duration_lookup.json`).
-6. FastAPI app import test (`from backend.main import app`).
-7. Port 8000 and 5500 availability.
-8. Render deployment configuration integrity (`render.yaml`, root `main.py`).
-
-### 3. `frontend/script.js` (Environment Separation)
-Added clean, automated environment switching:
-```javascript
-const IS_LOCAL = window.location.hostname === "localhost" || 
-                 window.location.hostname === "127.0.0.1" || 
-                 window.location.protocol === "file:";
-
-const LOCAL_API_URL = "http://127.0.0.1:8000";
-const PRODUCTION_API_URL = "https://smart-flight-booking-assistant.onrender.com";
-
-const API_BASE_URL = IS_LOCAL ? LOCAL_API_URL : PRODUCTION_API_URL;
-```
-
-### 4. Preservation of Render Configuration
-- `render.yaml` remains untouched and configured for cloud deployment.
-- Root `main.py` remains in place to support Render's ASGI entry point (`uvicorn main:app` or `uvicorn backend.main:app`).
+| Verification Item | Target Criteria | Status | Evidence / Notes |
+| :--- | :--- | :--- | :--- |
+| **Render URL** | Identifies true live endpoint | **PASS** | `https://smart-flight-booking-assistant-16wy.onrender.com` confirmed 200 OK; outdated slug replaced |
+| **Model Duration** | Duration included in features | **PASS** | Numerical transformer contains `['duration', 'days_left']` (5.56% importance) |
+| **Model Stops** | Stops One-Hot encoded | **PASS** | Categorical transformer handles `zero`, `one`, `two_or_more` (37 total features) |
+| **BAT Script** | `run.bat` launches clean | **PASS** | Auto-detects functional Python, cleans ports, starts Uvicorn & Frontend, passes health check |
+| **Diagnostics** | `BAT_DIAGNOSTICS.bat` | **PASS** | 8/8 automated checks passed |
+| **Local Prediction**| Prediction works locally | **PASS** | Tested on `http://127.0.0.1:8000/predict` $\to$ ₹ 2,675.32 |
+| **Render Prediction**| Prediction works on cloud | **PASS** | Tested on Render URL $\to$ ₹ 2,675.32 with full CORS headers |
+| **Independence** | Local & Cloud separated | **PASS** | `frontend/script.js` dynamically routes based on `window.location.hostname` |
 
 ---
 
-## 4. Verification Evidence & Test Results
-
-### A. Diagnostic Script Output (`BAT_DIAGNOSTICS.bat`)
-```
-======================================================================
-      SMART FLIGHT BOOKING ASSISTANT - STARTUP DIAGNOSTICS
-======================================================================
-
-[1/8] Checking Python Interpreter...
-      [WARN] venv\Scripts\python.exe exists but failed execution check.
-      [PASS] System Python is valid: C:\Users\thann\AppData\Local\Programs\Python\Python314\python.exe
-[2/8] Checking Required Dependencies (fastapi, uvicorn, pydantic, pandas, joblib, sklearn)...
-      [PASS] All critical dependencies are installed.
-[3/8] Key Project Files...
-      [PASS] All essential frontend and backend scripts exist.
-[4/8] Checking Trained ML Model PKL File...
-      [PASS] V2 Random Forest model found: backend\flight_price_rf_pipeline_v2.pkl
-[5/8] Checking Duration Lookup Table...
-      [PASS] Duration lookup table found: backend\duration_lookup.json
-[6/8] Checking FastAPI App Importability...
-      [PASS] backend.main:app imports without runtime errors.
-[7/8] Checking Port Availability - 8000 for backend, 5500 for frontend...
-      [PASS] Ports checked.
-[8/8] Checking Render Deployment Configuration...
-      [PASS] Render deployment configurations are intact.
-
-======================================================================
-DIAGNOSTIC SUMMARY: 8 Passed, 0 Failed
-[RESULT] System is HEALTHY and READY to run via run.bat.
-======================================================================
-```
-
-### B. Backend API Test Suite Output
-```
-Health Check: PASS -> {'status': 'healthy', 'model_loaded': True, 'model_version': 'v2', 'mae': 1293.06}
-Available Options: PASS -> ['airlines', 'cities', 'departure_times', 'arrival_times', 'flight_classes', 'stops']
-Flight Details Calculation: PASS -> duration: 2.17 arrival: Afternoon
-Flight Prediction: PASS -> price: 2594.38 MAE: 1293.06 tree_uncertainty: 271.48
-Booking Advisor: PASS -> action: BOOK_NOW recommendation: Current airfare (₹2,594.38) is optimal. Fares historically rise steadily as the departure date nears.
-
-ALL BACKEND VERIFICATIONS CONFIRMED OPERATIONAL!
-```
-
----
-
-## 5. How to Run Locally
-
-Double-click `run.bat` in the project directory:
-```
-Smart_Flight_Booking_Assistant\run.bat
-```
-1. It validates the Python interpreter and dependencies.
-2. It cleans ports 8000 and 5500 if occupied.
-3. It launches the FastAPI backend on port 8000.
-4. It launches the frontend server on port 5500.
-5. It polls `http://127.0.0.1:8000/health` until ready.
-6. It opens `http://127.0.0.1:5500/index.html` in your default web browser.
-
-For troubleshooting, run:
-```
-Smart_Flight_Booking_Assistant\BAT_DIAGNOSTICS.bat
-```
+## 6. How to Run the Verified Project
+- **To Launch Locally:** Double-click `run.bat` in the project folder.
+- **To Run Startup Diagnostics:** Double-click `BAT_DIAGNOSTICS.bat`.
+- **To Access Online Cloud Deployment:** Visit `https://smart-flight-booking-assistant-16wy.onrender.com/docs`.

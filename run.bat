@@ -6,15 +6,11 @@ echo        SMART FLIGHT BOOKING ASSISTANT LAUNCHER
 echo ========================================================
 echo.
 
-:: 1. Navigate to script's own directory (Guarantees correct project root)
+:: 1. Navigate to script directory
 cd /d "%~dp0"
 echo [*] Project Root: %CD%
 
-:: 2. Robust Python Interpreter Resolution
-:: Priority:
-::  a) Project virtual environment (if python.exe is executable)
-::  b) System python (if functional)
-::  c) py launcher (Windows standard)
+:: 2. Resolve Working Python Interpreter
 set "PYTHON_EXE="
 
 if exist "%~dp0venv\Scripts\python.exe" (
@@ -23,23 +19,23 @@ if exist "%~dp0venv\Scripts\python.exe" (
         set "PYTHON_EXE=%~dp0venv\Scripts\python.exe"
         echo [*] Using project virtual environment: venv\Scripts\python.exe
     ) else (
-        echo [!] Warning: venv\Scripts\python.exe exists but failed execution test.
+        echo [NOTICE] venv\Scripts\python.exe is invalid on this machine. Falling back...
     )
 )
 
 if not defined PYTHON_EXE (
     python -c "import sys" >nul 2>&1
     if !errorlevel! equ 0 (
-        for /f "delims=" %%I in ('python -c "import sys; print(sys.executable)"') do set "PYTHON_EXE=%%I"
-        echo [*] Using system Python: !PYTHON_EXE!
+        set "PYTHON_EXE=python"
+        echo [*] Using system Python
     )
 )
 
 if not defined PYTHON_EXE (
     py -c "import sys" >nul 2>&1
     if !errorlevel! equ 0 (
-        for /f "delims=" %%I in ('py -c "import sys; print(sys.executable)"') do set "PYTHON_EXE=%%I"
-        echo [*] Using Python launcher (py): !PYTHON_EXE!
+        set "PYTHON_EXE=py"
+        echo [*] Using Python launcher (py)
     )
 )
 
@@ -70,27 +66,29 @@ if !errorlevel! neq 0 (
 echo [*] All required Python dependencies verified.
 
 :: Verify model files exist
-if not exist "%~dp0backend\flight_price_rf_pipeline_v2.pkl" (
-    if not exist "%~dp0backend\flight_price_rf_pipeline.pkl" (
-        echo.
-        echo [ERROR] Trained model file (.pkl) not found in "%~dp0backend"!
-        echo.
-        pause
-        exit /b 1
-    )
+set "MODEL_OK=0"
+if exist "%~dp0backend\flight_price_rf_pipeline_v2.pkl" set "MODEL_OK=1"
+if exist "%~dp0backend\flight_price_rf_pipeline.pkl" set "MODEL_OK=1"
+
+if "!MODEL_OK!"=="0" (
+    echo.
+    echo [ERROR] Trained model file not found in "%~dp0backend"!
+    echo.
+    pause
+    exit /b 1
 )
 echo [*] ML Model file verified.
 
-:: 3. Port conflict resolution (Ports 8000 & 5500)
+:: 3. Port conflict resolution - Ports 8000 and 5500
 echo.
 echo [*] Checking port availability...
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":8000" ^| findstr "LISTENING"') do (
-    echo [*] Detected process on port 8000 (PID: %%a). Releasing port...
+    echo [*] Detected process on port 8000 - PID %%a - releasing port...
     taskkill /F /PID %%a >nul 2>&1
 )
 
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":5500" ^| findstr "LISTENING"') do (
-    echo [*] Detected process on port 5500 (PID: %%a). Releasing port...
+    echo [*] Detected process on port 5500 - PID %%a - releasing port...
     taskkill /F /PID %%a >nul 2>&1
 )
 
@@ -112,13 +110,13 @@ for /L %%i in (1,1,12) do (
         if !errorlevel! equ 0 (
             set "READY=1"
         ) else (
-            timeout /t 1 /nobreak >nul
+            "!PYTHON_EXE!" -c "import time; time.sleep(1)"
         )
     )
 )
 
 if !READY! equ 1 (
-    echo [*] Backend health check PASSED (http://127.0.0.1:8000/health is responsive).
+    echo [*] Backend health check PASSED - http://127.0.0.1:8000/health is responsive.
     echo.
     echo ========================================================
     echo   SUCCESS: All Services Are Live!

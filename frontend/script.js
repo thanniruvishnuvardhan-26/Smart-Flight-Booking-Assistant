@@ -16,7 +16,7 @@ const IS_LOCAL = window.location.hostname === "localhost" ||
 
 // Local FastAPI backend vs Deployed Render backend URL
 const LOCAL_API_URL = "http://127.0.0.1:8000";
-const PRODUCTION_API_URL = "https://smart-flight-booking-assistant.onrender.com";
+const PRODUCTION_API_URL = "https://smart-flight-booking-assistant-16wy.onrender.com";
 
 const API_BASE_URL = IS_LOCAL ? LOCAL_API_URL : PRODUCTION_API_URL;
 
