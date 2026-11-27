@@ -89,6 +89,15 @@
 
         <span class="nav-label" style="margin-top: 16px;">Platform</span>
 
+        <a class="nav-item" data-page="admin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect width="18" height="18" x="3" y="3" rx="2" />
+            <path d="M3 9h18" />
+            <path d="M9 21V9" />
+          </svg>
+          <span>Admin Dashboard</span>
+        </a>
+
         <a class="nav-item" data-page="about">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <circle cx="12" cy="12" r="10" />
@@ -354,11 +363,11 @@
 
 
         <!-- =======================================================
-             PAGE 2: FLIGHT PRICE PREDICTOR
+             PAGE 2: FLIGHT PRICE PREDICTOR (DUAL MODE: SMART & ADVANCED)
              ======================================================= -->
         <section class="page-view" id="page-predictor">
 
-          <div class="page-header">
+          <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
             <div>
               <h2 class="page-title">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -367,11 +376,175 @@
                 </svg>
                 Flight Price Estimator
               </h2>
-              <p class="page-subtitle">Configure flight attributes to query the trained Random Forest model in real
-                time.</p>
+              <p class="page-subtitle">Choose between instant Smart Prediction or detailed Advanced manual parameters.</p>
+            </div>
+
+            <!-- PREDICTION MODE TOGGLE PILL -->
+            <div class="mode-toggle-container" style="display: inline-flex; background: #E2E8F0; padding: 4px; border-radius: 10px;">
+              <button type="button" class="mode-btn active" id="modeBtnSmart" onclick="switchPredictionMode('smart')" style="padding: 8px 16px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; background: #FFFFFF; color: #2563EB; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                ⚡ Smart Prediction (Recommended)
+              </button>
+              <button type="button" class="mode-btn" id="modeBtnAdvanced" onclick="switchPredictionMode('advanced')" style="padding: 8px 16px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; background: transparent; color: #64748B;">
+                ⚙️ Advanced Prediction
+              </button>
             </div>
           </div>
 
+          <!-- ==================== SMART PREDICTION VIEW (MODE 1: DEFAULT) ==================== -->
+          <div id="smartPredictionSection">
+            <div class="card animate-card" style="margin-bottom: 24px;">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title">Smart Route Search (3 Simple Inputs)</h3>
+                  <p class="card-desc">Enter only your travel route and booking window. The AI explores all authentic historical flight combinations and values each available itinerary.</p>
+                </div>
+              </div>
+
+              <form id="smartFlightForm">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; align-items: flex-end;">
+                  <!-- Source City -->
+                  <div class="form-group">
+                    <label class="form-label" for="smart_source_city">Origin City</label>
+                    <select class="select-control" id="smart_source_city" required>
+                      <option value="Delhi" selected>Delhi (DEL)</option>
+                      <option value="Mumbai">Mumbai (BOM)</option>
+                      <option value="Bangalore">Bangalore (BLR)</option>
+                      <option value="Kolkata">Kolkata (CCU)</option>
+                      <option value="Hyderabad">Hyderabad (HYD)</option>
+                      <option value="Chennai">Chennai (MAA)</option>
+                    </select>
+                  </div>
+
+                  <!-- Destination City -->
+                  <div class="form-group">
+                    <label class="form-label" for="smart_destination_city">Destination City</label>
+                    <select class="select-control" id="smart_destination_city" required>
+                      <option value="Delhi">Delhi (DEL)</option>
+                      <option value="Mumbai" selected>Mumbai (BOM)</option>
+                      <option value="Bangalore">Bangalore (BLR)</option>
+                      <option value="Kolkata">Kolkata (CCU)</option>
+                      <option value="Hyderabad">Hyderabad (HYD)</option>
+                      <option value="Chennai">Chennai (MAA)</option>
+                    </select>
+                  </div>
+
+                  <!-- Days Left -->
+                  <div class="form-group">
+                    <label class="form-label" for="smart_days_left">Days Left Before Booking (1-50)</label>
+                    <input type="number" class="input-control" id="smart_days_left" min="1" max="50" value="15" required>
+                  </div>
+
+                  <!-- Search Button -->
+                  <div class="form-group">
+                    <button type="submit" class="btn btn-primary" id="smartSearchBtn" style="width: 100%; height: 44px;">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                      <span>Find Available Flight Options</span>
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <!-- Smart Options Results Area -->
+            <div id="smartResultsContainer" style="display: none;">
+              <!-- Filter & Sort Bar -->
+              <div class="card animate-card" style="padding: 16px 20px; margin-bottom: 20px; background: #F8FAFC;">
+                <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 13px; font-weight: 700; color: #1E293B;">Found <span id="smartTotalCount" style="color: #2563EB;">0</span> operating combinations</span>
+                    <span class="badge-tag emerald" style="font-size: 11px;">Stops strictly: 0, 1, or 2</span>
+                  </div>
+
+                  <!-- Filters & Sorters -->
+                  <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                    <!-- Airline filter -->
+                    <select class="select-control" id="filterAirline" onchange="applySmartFilters()" style="padding: 6px 12px; font-size: 12px; width: auto;">
+                      <option value="ALL">All Airlines</option>
+                      <option value="Air India">Air India</option>
+                      <option value="AirAsia">AirAsia</option>
+                      <option value="GO_FIRST">GO_FIRST</option>
+                      <option value="Indigo">Indigo</option>
+                      <option value="SpiceJet">SpiceJet</option>
+                      <option value="Vistara">Vistara</option>
+                    </select>
+
+                    <!-- Cabin Class filter -->
+                    <select class="select-control" id="filterClass" onchange="applySmartFilters()" style="padding: 6px 12px; font-size: 12px; width: auto;">
+                      <option value="ALL">All Cabin Classes</option>
+                      <option value="Economy">Economy</option>
+                      <option value="Business">Business</option>
+                    </select>
+
+                    <!-- Stops filter (STRICTLY 0, 1, 2) -->
+                    <select class="select-control" id="filterStops" onchange="applySmartFilters()" style="padding: 6px 12px; font-size: 12px; width: auto;">
+                      <option value="ALL">All Stops (0-2)</option>
+                      <option value="0">Non-stop (Direct)</option>
+                      <option value="1">1 Stop</option>
+                      <option value="2">2 Stops</option>
+                    </select>
+
+                    <!-- Sort control -->
+                    <select class="select-control" id="sortOptions" onchange="applySmartFilters()" style="padding: 6px 12px; font-size: 12px; width: auto; font-weight: 600; background: #EEF2FF; color: #3730A3;">
+                      <option value="price_asc">Sort: Lowest Price</option>
+                      <option value="price_desc">Sort: Highest Price</option>
+                      <option value="duration_asc">Sort: Shortest Duration</option>
+                      <option value="airline_asc">Sort: Airline Name</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Options Grid & Selected Option Detail View -->
+              <div style="display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start;" id="smartLayoutGrid">
+                <!-- Flight Cards List -->
+                <div id="smartFlightCardsList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+
+                <!-- Sticky Detailed Inspection Card -->
+                <div class="card animate-card" id="smartDetailedCard" style="position: sticky; top: 90px; padding: 22px;">
+                  <div style="font-size: 11px; text-transform: uppercase; color: #64748B; font-weight: 800; letter-spacing: 0.5px;">Flight Inspection Details</div>
+                  <h3 id="detailFlightTitle" style="font-size: 18px; color: #0F172A; margin: 6px 0 14px 0; font-weight: 800;">Select any flight option</h3>
+                  
+                  <div id="detailFareBox" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+                    <div style="font-size: 11px; color: #64748B; font-weight: 700; text-transform: uppercase;">Predicted Airfare</div>
+                    <div style="font-size: 28px; font-weight: 900; color: #1E293B; margin: 4px 0;">₹ <span id="detailPriceVal">--</span></div>
+                    <div style="font-size: 12px; color: #475569;">Confidence Range: <strong>₹ <span id="detailFloorVal">--</span></strong> - <strong>₹ <span id="detailCeilVal">--</span></strong></div>
+                  </div>
+
+                  <div id="detailAdvisorBox" style="margin-bottom: 16px; padding: 12px 14px; border-radius: 8px; background: #ECFDF5; border: 1px solid #A7F3D0; display: none;">
+                    <div style="font-size: 11px; font-weight: 800; color: #065F46; text-transform: uppercase;">Recommendation</div>
+                    <div id="detailAdvisorText" style="font-size: 12px; color: #047857; margin-top: 4px; line-height: 1.4;">--</div>
+                  </div>
+
+                  <div class="spec-list" style="margin-bottom: 18px;">
+                    <div class="spec-row"><span class="spec-key">Route</span><span class="spec-val" id="detailRouteVal">--</span></div>
+                    <div class="spec-row"><span class="spec-key">Airline</span><span class="spec-val" id="detailAirlineVal">--</span></div>
+                    <div class="spec-row"><span class="spec-key">Cabin Class</span><span class="spec-val" id="detailClassVal">--</span></div>
+                    <div class="spec-row"><span class="spec-key">Stops</span><span class="spec-val" id="detailStopsVal">--</span></div>
+                    <div class="spec-row"><span class="spec-key">Departure</span><span class="spec-val" id="detailDepVal">--</span></div>
+                    <div class="spec-row"><span class="spec-key">Arrival</span><span class="spec-val" id="detailArrVal">--</span></div>
+                    <div class="spec-row"><span class="spec-key">Duration</span><span class="spec-val" id="detailDurationVal">--</span></div>
+                    <div class="spec-row"><span class="spec-key">Days Left</span><span class="spec-val" id="detailDaysVal">--</span></div>
+                  </div>
+
+                  <!-- User Feedback Widget -->
+                  <div id="feedbackWidget" style="border-top: 1px solid #E2E8F0; padding-top: 14px; margin-top: 10px;">
+                    <span style="font-size: 12px; font-weight: 700; color: #334155;">Was this prediction useful?</span>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                      <button type="button" class="btn btn-secondary" onclick="submitUserFeedback('Yes')" style="flex: 1; padding: 6px; font-size: 12px;">👍 Yes</button>
+                      <button type="button" class="btn btn-secondary" onclick="submitUserFeedback('No')" style="flex: 1; padding: 6px; font-size: 12px;">👎 No</button>
+                    </div>
+                    <div id="feedbackAck" style="display: none; font-size: 11px; color: #059669; margin-top: 6px; font-weight: 600;">✓ Feedback recorded in database!</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==================== ADVANCED PREDICTION VIEW (MODE 2: PRESERVED) ==================== -->
+          <div id="advancedPredictionSection" style="display: none;">
           <div class="predictor-layout">
 
             <!-- Left Column: Form -->
@@ -626,6 +799,7 @@
             </div>
 
           </div>
+          </div><!-- End advancedPredictionSection -->
 
         </section>
 
@@ -887,7 +1061,171 @@
 
 
         <!-- =======================================================
-             PAGE 6: ABOUT AND METHODOLOGY
+             PAGE 6: ADMINISTRATOR DASHBOARD (MYSQL INTEGRATED)
+             ======================================================= -->
+        <section class="page-view" id="page-admin">
+          <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px;">
+            <div>
+              <div class="badge-tag amber" style="margin-bottom: 6px; font-weight: 700;">Academic Demonstration • Public Access Mode</div>
+              <h2 class="page-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect width="18" height="18" x="3" y="3" rx="2" />
+                  <path d="M3 9h18" />
+                  <path d="M9 21V9" />
+                </svg>
+                Administrator Analytics Dashboard
+              </h2>
+              <p class="page-subtitle">Real-time telemetry and user search activity directly queried from relational database storage (MySQL).</p>
+            </div>
+            <button class="btn btn-secondary" onclick="loadAdminMetrics()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M8 16H3v5" />
+              </svg>
+              <span>Refresh Metrics</span>
+            </button>
+          </div>
+
+          <!-- Notice explaining academic demonstration and no authentication -->
+          <div class="disclaimer-banner animate-card" style="margin-bottom: 24px;">
+            <svg class="disclaimer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" x2="12" y1="8" y2="12" />
+              <line x1="12" x2="12.01" y1="16" y2="16" />
+            </svg>
+            <div class="disclaimer-content">
+              <h4>Academic Demonstration Notice</h4>
+              <p>This administrator dashboard is designed for academic demonstration and system evaluation. Per project guidelines, no user login or account registration is implemented. All metrics reflect actual anonymous application searches and price predictions stored in the database.</p>
+            </div>
+          </div>
+
+          <!-- Top Level KPI Cards -->
+          <div class="stats-grid" style="margin-bottom: 24px;">
+            <div class="stat-card animate-card">
+              <div class="stat-top">
+                <span class="stat-label">Total Searches</span>
+                <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
+              </div>
+              <div class="stat-value" id="adminTotalSearches">0</div>
+              <span class="stat-sub">Across all sessions</span>
+            </div>
+
+            <div class="stat-card animate-card">
+              <div class="stat-top">
+                <span class="stat-label">Model Predictions</span>
+                <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></div>
+              </div>
+              <div class="stat-value" id="adminTotalPredictions">0</div>
+              <span class="stat-sub">Logged in database</span>
+            </div>
+
+            <div class="stat-card animate-card">
+              <div class="stat-top">
+                <span class="stat-label">Smart Search Ratio</span>
+                <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></div>
+              </div>
+              <div class="stat-value"><span id="adminSmartSearches">0</span> / <span id="adminAdvancedSearches">0</span></div>
+              <span class="stat-sub">Smart vs Advanced</span>
+            </div>
+
+            <div class="stat-card animate-card">
+              <div class="stat-top">
+                <span class="stat-label">Database Storage Engine</span>
+                <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg></div>
+              </div>
+              <div class="stat-value" style="font-size: 19px;" id="adminDbType">MySQL Active</div>
+              <span class="stat-sub" id="adminFeedbackSub">0 Feedback submissions</span>
+            </div>
+          </div>
+
+          <!-- Admin Charts Grid -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px; margin-bottom: 24px;">
+            <!-- Popular Routes Chart -->
+            <div class="card animate-card">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title">Most Searched Routes</h3>
+                  <p class="card-desc">Top origin → destination pairs queried by users</p>
+                </div>
+              </div>
+              <div style="height: 260px;">
+                <canvas id="adminRoutesChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Airlines Selected Chart -->
+            <div class="card animate-card">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title">Airlines Selected in Predictions</h3>
+                  <p class="card-desc">Frequency of airline carriers evaluated</p>
+                </div>
+              </div>
+              <div style="height: 260px;">
+                <canvas id="adminAirlinesChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Stops Distribution Chart (STRICTLY 0, 1, 2) -->
+            <div class="card animate-card">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title">Flight Stops Distribution</h3>
+                  <p class="card-desc">Direct (0), 1 stop, and 2 stops distribution</p>
+                </div>
+              </div>
+              <div style="height: 260px;">
+                <canvas id="adminStopsChart"></canvas>
+              </div>
+            </div>
+
+            <!-- User Feedback Breakdown -->
+            <div class="card animate-card">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title">User Feedback Rating</h3>
+                  <p class="card-desc">Evaluation of prediction utility</p>
+                </div>
+              </div>
+              <div style="height: 260px;">
+                <canvas id="adminFeedbackChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity Log Table -->
+          <div class="card animate-card">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">Recent Prediction Activity</h3>
+                <p class="card-desc">Last 10 user predictions recorded in the database</p>
+              </div>
+            </div>
+
+            <div style="overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #E2E8F0; color: #64748B;">
+                    <th style="padding: 10px 12px;">Timestamp</th>
+                    <th style="padding: 10px 12px;">Route</th>
+                    <th style="padding: 10px 12px;">Days Left</th>
+                    <th style="padding: 10px 12px;">Mode</th>
+                    <th style="padding: 10px 12px;">Airline</th>
+                    <th style="padding: 10px 12px;">Predicted Price</th>
+                  </tr>
+                </thead>
+                <tbody id="adminRecentActivityBody">
+                  <tr><td colspan="6" style="padding: 24px; text-align: center; color: #94A3B8;">No prediction activity recorded yet. Run a prediction to see live database records.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- =======================================================
+             PAGE 7: ABOUT AND METHODOLOGY
              ======================================================= -->
         <section class="page-view" id="page-about">
 

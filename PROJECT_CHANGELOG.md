@@ -1,18 +1,39 @@
 # PROJECT CHANGELOG — SMART FLIGHT BOOKING ASSISTANT
 
+## Version 2.2.0 — November 27, 2026
+**Major Milestone: Smart Prediction, Advanced Mode, Duration Hierarchy, MySQL Integration & Administrator Dashboard**
+
+### 1. Dual Prediction Modes
+- **Mode 1: Smart Prediction (Default):**
+  - Requires only 3 inputs: Source City, Destination City, and Days Left.
+  - Generates price predictions across all authentic operating flight combinations from `route_combinations.json` using high-performance batch vectorization.
+  - Implements interactive client-side sorting (Lowest Price, Highest Price, Shortest Duration, Airline) and filtering (Airline, Cabin Class, Stops).
+  - Enforces strict stops restriction: **0 stops (Non-stop), 1 stop, and 2 stops only**.
+- **Mode 2: Advanced Prediction (Preserved):**
+  - Preserved the manual form for users who wish to customize Carrier, Departure Slot, Stops, and Cabin Class.
+  - Uses the same Random Forest model (`flight_price_rf_pipeline_v2.pkl`) and confidence range calculations.
+
+### 2. Duration & Arrival Calculation Resolution
+- Diagnosed that connecting 1-stop flights in the dataset include total elapsed travel time with layovers (hence 11–15 hours for certain routes).
+- Implemented a 4-level hierarchical duration lookup in `duration_lookup.json` (`route_stops_airline` -> `route_stops` -> `route_pair` -> `overall_median`).
+- Implemented arrival slot calculation with midnight crossing indicator (`crosses_midnight`).
+
+### 3. MySQL Database Integration
+- Implemented `backend/db.py` supporting MySQL (`pymysql`) with automatic SQLite fallback (`local_flight_assistant.db`).
+- Created tables: `search_activity`, `prediction_history`, and `user_feedback`.
+- Created `.env.example` template for credentials.
+- Strictly enforced **zero login / registration** per academic project requirements.
+
+### 4. Administrator Analytics Dashboard
+- Created `#page-admin` in `index.html` with real-time KPI metrics, popular routes bar chart, airline selection distribution, stops breakdown, and feedback ratings.
+- Added recent activity log table displaying the last 10 queries from the database.
+
+### 5. `run.bat` Preservation
+- **Strictly preserved `run.bat` without modifying a single line of code.**
+
+---
+
 ## Version 2.1.0 — November 27, 2026
-
-### 1. `run.bat` Syntax and Window Auto-Close Fix
-- **Root Cause Identified:** Line 106 in `run.bat` included unescaped parentheses `(first run on this laptop)` inside an `if (...)` statement block. In Windows `cmd.exe`, nested unescaped parentheses prematurely terminate the batch parser with `... was unexpected at this time.`, which causes Command Prompt to exit immediately upon double-clicking.
-- **Fix Applied:** Removed nested unescaped parentheses in all echo messages. Added a comprehensive log file `logs/startup.log` documenting every step of startup.
-- **Window Persistence:** Added `pause >nul` at the end and in all error exit labels (`:ERROR`) so Command Prompt stays open on errors with explicit troubleshooting guidance.
-
-### 2. Dual-Environment Host & Venv Portability
-- **Smart Runtime Selection:** Updated `run.bat` to test host Python (`py` / `python`) for required packages first. If host Python has dependencies installed, it starts immediately with zero overhead.
-- **Isolated Venv Auto-Healing:** If host Python lacks packages, `run.bat` automatically creates and populates an isolated local `.venv` using `requirements.txt`.
-- **Zero Hardcoded Paths:** Dynamic `%~dp0` resolution ensures the project runs on any Windows machine regardless of username or drive letter.
-
-### 3. Service Verification & Live Execution
-- **FastAPI Backend (Uvicorn):** Running on `http://127.0.0.1:8000` with Random Forest model V2 (`flight_price_rf_pipeline_v2.pkl`) and `duration_lookup.json`.
-- **Frontend Server:** Running on `http://127.0.0.1:5500/index.html` with static file serving and CORS configuration.
-- **REST API Endpoints:** Verified `/health`, `/predict`, and `/feature-importance`.
+- Fixed unescaped parentheses in batch script syntax.
+- Added startup logging to `logs/startup.log`.
+- Added dual-runtime portability checks.

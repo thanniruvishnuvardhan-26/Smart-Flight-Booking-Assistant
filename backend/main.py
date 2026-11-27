@@ -39,6 +39,23 @@ app.add_middleware(
 BACKEND_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BACKEND_DIR / "flight_price_rf_pipeline_v2.pkl"
 LOOKUP_PATH = BACKEND_DIR / "duration_lookup.json"
+COMBINATIONS_PATH = BACKEND_DIR / "route_combinations.json"
+
+# Database Manager Import
+try:
+    from db import db_manager
+except ImportError:
+    from backend.db import db_manager
+
+# Load route combinations catalog for Smart Prediction
+ROUTE_COMBINATIONS: Dict[str, Any] = {}
+if COMBINATIONS_PATH.exists():
+    try:
+        with open(COMBINATIONS_PATH, "r", encoding="utf-8") as f:
+            ROUTE_COMBINATIONS = json.load(f)
+        print(f"[*] Loaded route combinations catalog from {COMBINATIONS_PATH} ({len(ROUTE_COMBINATIONS)} routes)")
+    except Exception as e:
+        print(f"[!] Warning: Could not load route combinations ({e})")
 
 # Load duration lookup table
 DURATION_LOOKUP: Dict[str, Any] = {}
@@ -154,20 +171,29 @@ def normalize_stops_value(val: Union[int, str]) -> str:
         return "two_or_more"
     return "one"
 
-def calculate_duration_and_arrival(source: str, destination: str, stops: Union[int, str], departure_time: str) -> Dict[str, Any]:
-    """Calculate flight duration from historical dataset lookup and compute arrival slot."""
+def calculate_duration_and_arrival(source: str, destination: str, stops: Union[int, str], departure_time: str, airline: Optional[str] = None) -> Dict[str, Any]:
+    """Calculate flight duration from hierarchical historical dataset lookup and compute arrival slot."""
     norm_stops = normalize_stops_value(stops)
-    key = f"{source}|{destination}|{norm_stops}"
     pair_key = f"{source}|{destination}"
+    route_stops_key = f"{source}|{destination}|{norm_stops}"
     
     duration = None
     if DURATION_LOOKUP:
-        route_stops = DURATION_LOOKUP.get("route_stops", {})
-        if key in route_stops:
-            duration = route_stops[key]
-        elif pair_key in DURATION_LOOKUP.get("route_pairs", {}):
-            duration = DURATION_LOOKUP["route_pairs"][pair_key]
-        else:
+        # Hierarchy Level 1: Source + Destination + Stops + Airline
+        if airline:
+            airline_key = f"{source}|{destination}|{norm_stops}|{airline}"
+            duration = DURATION_LOOKUP.get("route_stops_airline", {}).get(airline_key)
+        
+        # Hierarchy Level 2: Source + Destination + Stops
+        if duration is None:
+            duration = DURATION_LOOKUP.get("route_stops", {}).get(route_stops_key)
+            
+        # Hierarchy Level 3: Source + Destination route median
+        if duration is None:
+            duration = DURATION_LOOKUP.get("route_pair", {}).get(pair_key)
+            
+        # Hierarchy Level 4: Global overall median
+        if duration is None:
             duration = DURATION_LOOKUP.get("overall_median", 11.25)
     
     if duration is None:
@@ -211,6 +237,17 @@ class FlightCalculationRequest(BaseModel):
     destination_city: str
     stops: Union[int, str]
     departure_time: str
+    airline: Optional[str] = None
+
+class SmartSearchRequest(BaseModel):
+    source_city: str
+    destination_city: str
+    days_left: int = Field(ge=1, le=50)
+
+class FeedbackRequest(BaseModel):
+    prediction_id: Optional[int] = None
+    rating: str
+    comments: Optional[str] = None
 
 class FlightDetails(BaseModel):
     airline: str
@@ -349,7 +386,7 @@ def build_input_row(flight: FlightDetails) -> pd.DataFrame:
 
 # Prediction endpoint
 @app.post("/predict")
-def predict_price(flight: FlightDetails):
+def predict_price(flight: FlightDetails, mode: str = "Advanced"):
     if flight.source_city == flight.destination_city:
         raise HTTPException(
             status_code=400,
@@ -361,7 +398,8 @@ def predict_price(flight: FlightDetails):
         flight.source_city,
         flight.destination_city,
         flight.stops,
-        flight.departure_time
+        flight.departure_time,
+        airline=flight.airline
     )
     
     # Use calculated values if not explicitly provided or invalid
@@ -382,11 +420,39 @@ def predict_price(flight: FlightDetails):
     }])
 
     prediction, tree_uncertainty = compute_prediction_and_uncertainty(input_data)
+    lower_price = round(max(0.0, prediction - TEST_MAE), 2)
+    upper_price = round(prediction + TEST_MAE, 2)
+    predicted_rounded = round(prediction, 2)
+
+    # Map stops to integer 0, 1, or 2 for database
+    stops_int = 0 if norm_stops == "zero" else (1 if norm_stops == "one" else 2)
+
+    # Record in database (anonymous history)
+    pred_id = None
+    try:
+        pred_id = db_manager.record_prediction({
+            "source_city": flight.source_city,
+            "destination_city": flight.destination_city,
+            "days_left": flight.days_left,
+            "airline": flight.airline,
+            "flight_class": flight.flight_class,
+            "stops": stops_int,
+            "departure_time": flight.departure_time,
+            "duration": effective_duration,
+            "arrival_time": effective_arrival,
+            "predicted_price": predicted_rounded,
+            "lower_price": lower_price,
+            "upper_price": upper_price,
+            "prediction_mode": mode
+        })
+    except Exception as e:
+        print(f"[!] Warning: Could not record prediction to DB ({e})")
 
     return {
-        "predicted_price": round(prediction, 2),
-        "lower_price": round(max(0.0, prediction - TEST_MAE), 2),
-        "upper_price": round(prediction + TEST_MAE, 2),
+        "prediction_id": pred_id,
+        "predicted_price": predicted_rounded,
+        "lower_price": lower_price,
+        "upper_price": upper_price,
         "mae": TEST_MAE,
         "tree_uncertainty": round(tree_uncertainty, 2),
         "model_spread_low": round(max(0.0, prediction - tree_uncertainty), 2),
@@ -396,6 +462,128 @@ def predict_price(flight: FlightDetails):
         "crosses_midnight": calc_info["crosses_midnight"],
         "currency": "INR"
     }
+
+# -------------------------------------------------------------
+# PART 1: SMART PREDICTION API
+# -------------------------------------------------------------
+@app.post("/smart-prediction")
+def smart_prediction(req: SmartSearchRequest):
+    if req.source_city == req.destination_city:
+        raise HTTPException(
+            status_code=400,
+            detail="Source city and destination city cannot be the same."
+        )
+
+    route_key = f"{req.source_city}|{req.destination_city}"
+    valid_combos = ROUTE_COMBINATIONS.get(route_key, [])
+
+    if not valid_combos:
+        # Fallback to generating based on known operating airlines for this route
+        raise HTTPException(
+            status_code=404,
+            detail=f"No operating flight combinations found for route {req.source_city} → {req.destination_city}."
+        )
+
+    # Record search in database
+    search_id = None
+    try:
+        search_id = db_manager.record_search(
+            source_city=req.source_city,
+            destination_city=req.destination_city,
+            days_left=req.days_left,
+            search_mode="Smart",
+            combinations_found=len(valid_combos)
+        )
+    except Exception as e:
+        print(f"[!] Warning: Could not record search ({e})")
+
+    # Generate batch predictions for all valid operating combinations
+    flight_options = []
+    input_rows = []
+
+    for combo in valid_combos:
+        # Strict stops restriction: only 0, 1, or 2 stops
+        stops_num = combo["stops"]
+        if stops_num not in (0, 1, 2):
+            continue
+
+        stops_str = combo.get("stops_str", ("zero" if stops_num == 0 else ("one" if stops_num == 1 else "two_or_more")))
+
+        input_rows.append({
+            "airline": combo["airline"],
+            "source_city": req.source_city,
+            "departure_time": combo["departure_time"],
+            "stops": stops_str,
+            "arrival_time": combo["arrival_time"],
+            "destination_city": req.destination_city,
+            "class": combo["flight_class"],
+            "duration": combo["duration"],
+            "days_left": req.days_left
+        })
+
+        flight_options.append({
+            "airline": combo["airline"],
+            "source_city": req.source_city,
+            "destination_city": req.destination_city,
+            "flight_class": combo["flight_class"],
+            "stops": stops_num,
+            "stops_label": "Non-stop" if stops_num == 0 else (f"{stops_num} stop" if stops_num == 1 else f"{stops_num} stops"),
+            "departure_time": combo["departure_time"],
+            "arrival_time": combo["arrival_time"],
+            "duration": combo["duration"],
+            "days_left": req.days_left,
+            "historical_flights_count": combo.get("historical_flights_count", 1)
+        })
+
+    # Run predictions in high-performance vectorized batch
+    if input_rows:
+        batch_df = pd.DataFrame(input_rows)
+        preds = model.predict(batch_df)
+
+        for idx, p in enumerate(preds):
+            pred_val = round(float(p), 2)
+            flight_options[idx]["predicted_price"] = pred_val
+            flight_options[idx]["lower_price"] = round(max(0.0, pred_val - TEST_MAE), 2)
+            flight_options[idx]["upper_price"] = round(pred_val + TEST_MAE, 2)
+
+    # Sort results by lowest predicted price by default
+    flight_options.sort(key=lambda x: x["predicted_price"])
+
+    return {
+        "search_id": search_id,
+        "source_city": req.source_city,
+        "destination_city": req.destination_city,
+        "days_left": req.days_left,
+        "total_combinations": len(flight_options),
+        "options": flight_options
+    }
+
+# -------------------------------------------------------------
+# USER FEEDBACK API
+# -------------------------------------------------------------
+@app.post("/feedback")
+def submit_feedback(fb: FeedbackRequest):
+    if not fb.rating:
+        raise HTTPException(status_code=400, detail="Feedback rating is required.")
+    fb_id = db_manager.record_feedback(
+        rating=fb.rating,
+        comments=fb.comments,
+        prediction_id=fb.prediction_id
+    )
+    return {
+        "status": "success",
+        "feedback_id": fb_id,
+        "message": "Thank you for your feedback!"
+    }
+
+# -------------------------------------------------------------
+# ADMINISTRATOR DASHBOARD METRICS API
+# -------------------------------------------------------------
+@app.get("/admin/metrics")
+def get_admin_dashboard_metrics():
+    """Retrieve actual MySQL database records and usage metrics for Admin Dashboard."""
+    return db_manager.get_admin_metrics()
+
 
 # Feature Importance API
 @app.get("/feature-importance")

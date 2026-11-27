@@ -77,7 +77,7 @@ function initNavigation() {
 
 function getHashPage() {
   const hash = window.location.hash.replace("#", "").trim();
-  const validPages = ["overview", "predictor", "trends", "alternatives", "insights", "about"];
+  const validPages = ["overview", "predictor", "trends", "alternatives", "insights", "admin", "about"];
   return validPages.includes(hash) ? hash : null;
 }
 
@@ -86,7 +86,7 @@ function navigateToPage(pageId) {
 }
 
 function renderPage(pageId, pushState = true) {
-  const validPages = ["overview", "predictor", "trends", "alternatives", "insights", "about"];
+  const validPages = ["overview", "predictor", "trends", "alternatives", "insights", "admin", "about"];
   if (!validPages.includes(pageId)) pageId = "overview";
 
   // Update DOM classes for smooth slide & fade transitions
@@ -115,6 +115,7 @@ function renderPage(pageId, pushState = true) {
     trends: "Booking Trends",
     alternatives: "Cheaper Alternatives",
     insights: "Fare Insights",
+    admin: "Admin Dashboard",
     about: "About & Methodology"
   };
   const breadcrumbCurrent = document.getElementById("breadcrumbCurrent");
@@ -135,6 +136,8 @@ function renderPage(pageId, pushState = true) {
     triggerTrendAnalysis();
   } else if (pageId === "alternatives") {
     triggerAlternativesScan();
+  } else if (pageId === "admin") {
+    loadAdminMetrics();
   }
 }
 
@@ -161,12 +164,13 @@ function getFlightFormData() {
   };
 }
 
-// Dynamic Flight Calculation: Auto Duration and Arrival Slot
+// Dynamic Flight Calculation: Auto Duration and Arrival Slot (Hierarchical Lookup)
 async function updateDynamicFlightCalculation() {
   const source = document.getElementById("source_city")?.value;
   const destination = document.getElementById("destination_city")?.value;
   const stops = document.getElementById("stops")?.value || "zero";
   const departureTime = document.getElementById("departure_time")?.value || "Morning";
+  const airline = document.getElementById("airline")?.value || null;
 
   if (!source || !destination || source === destination) return;
 
@@ -178,7 +182,8 @@ async function updateDynamicFlightCalculation() {
         source_city: source,
         destination_city: destination,
         stops: stops,
-        departure_time: departureTime
+        departure_time: departureTime,
+        airline: airline
       })
     });
 
@@ -1163,18 +1168,425 @@ function showToast(message, type = "info") {
 
 
 // ============================================================
+// PART 1 & 4 & 5: SMART PREDICTION, ADMIN DASHBOARD & USER FEEDBACK
+// ============================================================
+
+let currentSmartOptions = [];
+let activeSelectedFlight = null;
+let currentPredictionId = null;
+
+function switchPredictionMode(mode) {
+  const smartSection = document.getElementById("smartPredictionSection");
+  const advSection = document.getElementById("advancedPredictionSection");
+  const btnSmart = document.getElementById("modeBtnSmart");
+  const btnAdv = document.getElementById("modeBtnAdvanced");
+
+  if (mode === "smart") {
+    if (smartSection) smartSection.style.display = "block";
+    if (advSection) advSection.style.display = "none";
+    if (btnSmart) {
+      btnSmart.style.background = "#FFFFFF";
+      btnSmart.style.color = "#2563EB";
+      btnSmart.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+    }
+    if (btnAdv) {
+      btnAdv.style.background = "transparent";
+      btnAdv.style.color = "#64748B";
+      btnAdv.style.boxShadow = "none";
+    }
+  } else {
+    if (smartSection) smartSection.style.display = "none";
+    if (advSection) advSection.style.display = "block";
+    if (btnAdv) {
+      btnAdv.style.background = "#FFFFFF";
+      btnAdv.style.color = "#2563EB";
+      btnAdv.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+    }
+    if (btnSmart) {
+      btnSmart.style.background = "transparent";
+      btnSmart.style.color = "#64748B";
+      btnSmart.style.boxShadow = "none";
+    }
+  }
+}
+
+function initSmartPrediction() {
+  const smartForm = document.getElementById("smartFlightForm");
+  if (!smartForm) return;
+
+  smartForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const source = document.getElementById("smart_source_city").value;
+    const dest = document.getElementById("smart_destination_city").value;
+    const daysLeft = parseInt(document.getElementById("smart_days_left").value, 10);
+
+    if (source === dest) {
+      showToast("Source and destination city cannot be identical.", "error");
+      return;
+    }
+
+    const searchBtn = document.getElementById("smartSearchBtn");
+    searchBtn.disabled = true;
+    searchBtn.innerHTML = `<span>Searching Operating Flights...</span>`;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/smart-prediction`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source_city: source,
+          destination_city: dest,
+          days_left: daysLeft
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Failed to find flight combinations.");
+      }
+
+      const data = await res.json();
+      currentSmartOptions = data.options || [];
+
+      const resultsContainer = document.getElementById("smartResultsContainer");
+      if (resultsContainer) resultsContainer.style.display = "block";
+
+      const totalCount = document.getElementById("smartTotalCount");
+      if (totalCount) totalCount.textContent = currentSmartOptions.length;
+
+      applySmartFilters();
+
+      // Automatically select the lowest fare option first
+      if (currentSmartOptions.length > 0) {
+        selectFlightOption(currentSmartOptions[0]);
+      }
+
+      showToast(`Found ${currentSmartOptions.length} valid flight combinations for ${source} → ${dest}.`, "info");
+    } catch (err) {
+      console.error("Smart Search Error:", err);
+      showToast(err.message, "error");
+    } finally {
+      searchBtn.disabled = false;
+      searchBtn.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <span>Find Available Flight Options</span>
+      `;
+    }
+  });
+}
+
+function applySmartFilters() {
+  const airlineFilter = document.getElementById("filterAirline").value;
+  const classFilter = document.getElementById("filterClass").value;
+  const stopsFilter = document.getElementById("filterStops").value;
+  const sortOption = document.getElementById("sortOptions").value;
+
+  let filtered = currentSmartOptions.filter(opt => {
+    if (airlineFilter !== "ALL" && opt.airline !== airlineFilter) return false;
+    if (classFilter !== "ALL" && opt.flight_class !== classFilter) return false;
+    if (stopsFilter !== "ALL" && String(opt.stops) !== String(stopsFilter)) return false;
+    return true;
+  });
+
+  // Sorting logic
+  if (sortOption === "price_asc") {
+    filtered.sort((a, b) => a.predicted_price - b.predicted_price);
+  } else if (sortOption === "price_desc") {
+    filtered.sort((a, b) => b.predicted_price - a.predicted_price);
+  } else if (sortOption === "duration_asc") {
+    filtered.sort((a, b) => a.duration - b.duration);
+  } else if (sortOption === "airline_asc") {
+    filtered.sort((a, b) => a.airline.localeCompare(b.airline));
+  }
+
+  renderSmartFlightCards(filtered);
+}
+
+function renderSmartFlightCards(options) {
+  const container = document.getElementById("smartFlightCardsList");
+  if (!container) return;
+
+  if (options.length === 0) {
+    container.innerHTML = `
+      <div class="card" style="padding: 32px; text-align: center; color: #64748B;">
+        <p style="font-size: 15px; font-weight: 600;">No flight options matched your current filter selection.</p>
+        <p style="font-size: 13px; margin-top: 6px;">Try adjusting the airline or stops filter above.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = options.map((opt, idx) => {
+    const isSelected = activeSelectedFlight &&
+      activeSelectedFlight.airline === opt.airline &&
+      activeSelectedFlight.flight_class === opt.flight_class &&
+      activeSelectedFlight.stops === opt.stops &&
+      activeSelectedFlight.departure_time === opt.departure_time;
+
+    return `
+      <div class="card animate-card" onclick="selectFlightOptionByIndex(${idx})" style="padding: 16px 20px; cursor: pointer; border: 2px solid ${isSelected ? '#2563EB' : '#E2E8F0'}; background: ${isSelected ? '#F8FAFC' : '#FFFFFF'}; transition: all 0.2s;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong style="font-size: 16px; color: #0F172A;">${opt.airline}</strong>
+              <span class="badge-tag ${opt.flight_class === 'Business' ? 'amber' : 'emerald'}" style="font-size: 10.5px; padding: 2px 7px;">${opt.flight_class}</span>
+              <span class="badge-tag" style="background: #EEF2FF; color: #4338CA; font-size: 10.5px; padding: 2px 7px;">${opt.stops_label}</span>
+            </div>
+            <div style="font-size: 12.5px; color: #64748B; margin-top: 6px;">
+              🛫 Departs: <strong>${opt.departure_time}</strong> • 🛬 Arrives: <strong>${opt.arrival_time}</strong> • ⏱️ <strong>${opt.duration} hrs</strong>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; text-transform: uppercase; color: #64748B; font-weight: 700;">Est. Fare</div>
+            <div style="font-size: 20px; font-weight: 900; color: #2563EB;">₹ ${opt.predicted_price.toLocaleString("en-IN")}</div>
+            <span style="font-size: 11px; color: #059669; font-weight: 600;">View Details →</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function selectFlightOptionByIndex(idx) {
+  if (currentSmartOptions[idx]) {
+    selectFlightOption(currentSmartOptions[idx]);
+    applySmartFilters();
+  }
+}
+
+async function selectFlightOption(opt) {
+  activeSelectedFlight = opt;
+
+  const titleEl = document.getElementById("detailFlightTitle");
+  const priceVal = document.getElementById("detailPriceVal");
+  const floorVal = document.getElementById("detailFloorVal");
+  const ceilVal = document.getElementById("detailCeilVal");
+  const routeVal = document.getElementById("detailRouteVal");
+  const airlineVal = document.getElementById("detailAirlineVal");
+  const classVal = document.getElementById("detailClassVal");
+  const stopsVal = document.getElementById("detailStopsVal");
+  const depVal = document.getElementById("detailDepVal");
+  const arrVal = document.getElementById("detailArrVal");
+  const durVal = document.getElementById("detailDurationVal");
+  const daysVal = document.getElementById("detailDaysVal");
+
+  if (titleEl) titleEl.textContent = `${opt.airline} (${opt.flight_class})`;
+  if (priceVal) priceVal.textContent = opt.predicted_price.toLocaleString("en-IN");
+  if (floorVal) floorVal.textContent = opt.lower_price.toLocaleString("en-IN");
+  if (ceilVal) ceilVal.textContent = opt.upper_price.toLocaleString("en-IN");
+  if (routeVal) routeVal.textContent = `${opt.source_city} → ${opt.destination_city}`;
+  if (airlineVal) airlineVal.textContent = opt.airline;
+  if (classVal) classVal.textContent = opt.flight_class;
+  if (stopsVal) stopsVal.textContent = opt.stops_label;
+  if (depVal) depVal.textContent = opt.departure_time;
+  if (arrVal) arrVal.textContent = opt.arrival_time;
+  if (durVal) durVal.textContent = `${opt.duration} hrs`;
+  if (daysVal) daysVal.textContent = `${opt.days_left} days prior`;
+
+  // Reset feedback confirmation state
+  const ack = document.getElementById("feedbackAck");
+  if (ack) ack.style.display = "none";
+
+  // Trigger Advisor Recommendation for selected option
+  try {
+    const res = await fetch(`${API_BASE_URL}/book-now-or-wait`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        airline: opt.airline,
+        source_city: opt.source_city,
+        departure_time: opt.departure_time,
+        stops: opt.stops === 0 ? "zero" : (opt.stops === 1 ? "one" : "two_or_more"),
+        arrival_time: opt.arrival_time,
+        destination_city: opt.destination_city,
+        flight_class: opt.flight_class,
+        duration: opt.duration,
+        days_left: opt.days_left
+      })
+    });
+    if (res.ok) {
+      const adv = await res.json();
+      const advBox = document.getElementById("detailAdvisorBox");
+      const advText = document.getElementById("detailAdvisorText");
+      if (advBox && advText) {
+        advBox.style.display = "block";
+        advText.textContent = `${adv.recommendation} (${adv.price_change_summary || ''})`;
+      }
+    }
+  } catch (e) {
+    console.warn("Advisor fetch failed for option:", e);
+  }
+}
+
+async function submitUserFeedback(rating) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/feedback`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prediction_id: currentPredictionId,
+        rating: rating,
+        comments: `User responded ${rating} on ${activeSelectedFlight ? activeSelectedFlight.airline : 'itinerary'}`
+      })
+    });
+    if (res.ok) {
+      const ack = document.getElementById("feedbackAck");
+      if (ack) ack.style.display = "block";
+      showToast("Thank you for your feedback!", "info");
+    }
+  } catch (e) {
+    console.error("Feedback submission error:", e);
+  }
+}
+
+// ============================================================
+// PART 4: ADMINISTRATOR DASHBOARD METRICS LOADER
+// ============================================================
+
+async function loadAdminMetrics() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/metrics`);
+    if (!res.ok) throw new Error("Could not fetch metrics from database");
+
+    const data = await res.json();
+
+    // Update KPI numbers
+    const totalS = document.getElementById("adminTotalSearches");
+    const totalP = document.getElementById("adminTotalPredictions");
+    const smartS = document.getElementById("adminSmartSearches");
+    const advS = document.getElementById("adminAdvancedSearches");
+    const dbType = document.getElementById("adminDbType");
+    const fbSub = document.getElementById("adminFeedbackSub");
+
+    if (totalS) totalS.textContent = data.total_searches;
+    if (totalP) totalP.textContent = data.total_predictions;
+    if (smartS) smartS.textContent = data.smart_searches;
+    if (advS) advS.textContent = data.advanced_searches;
+    if (dbType) dbType.textContent = data.database_type || "MySQL Active";
+    if (fbSub) fbSub.textContent = `${data.feedback_summary.total} Feedback submissions (${data.feedback_summary.helpful} helpful)`;
+
+    // Render Popular Routes Chart
+    renderAdminBarChart("adminRoutesChart",
+      data.popular_routes.map(r => r.route),
+      data.popular_routes.map(r => r.count),
+      "Searches", "#2563EB");
+
+    // Render Airlines Chart
+    renderAdminBarChart("adminAirlinesChart",
+      data.popular_airlines.map(a => a.airline),
+      data.popular_airlines.map(a => a.count),
+      "Predictions", "#4F46E5");
+
+    // Render Stops Distribution (0, 1, 2)
+    renderAdminDoughnutChart("adminStopsChart",
+      ["Direct (0 Stops)", "1 Stop", "2 Stops"],
+      [data.stops_distribution["0"], data.stops_distribution["1"], data.stops_distribution["2"]],
+      ["#10B981", "#3B82F6", "#F59E0B"]);
+
+    // Render Feedback Breakdown
+    renderAdminDoughnutChart("adminFeedbackChart",
+      ["Helpful (Yes)", "Needs Improvement (No)"],
+      [data.feedback_summary.helpful, data.feedback_summary.unhelpful],
+      ["#059669", "#EF4444"]);
+
+    // Render Recent Activity Table
+    const tableBody = document.getElementById("adminRecentActivityBody");
+    if (tableBody) {
+      if (data.recent_activity.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="padding: 24px; text-align: center; color: #94A3B8;">No prediction activity recorded yet. Run a prediction to see live database records.</td></tr>`;
+      } else {
+        tableBody.innerHTML = data.recent_activity.map(act => `
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 12px; color: #64748B;">${act.timestamp}</td>
+            <td style="padding: 10px 12px; font-weight: 700; color: #1E293B;">${act.source} → ${act.destination}</td>
+            <td style="padding: 10px 12px; color: #475569;">${act.days_left}d</td>
+            <td style="padding: 10px 12px;"><span class="badge-tag ${act.mode === 'Smart' ? 'emerald' : 'amber'}" style="font-size: 10px;">${act.mode}</span></td>
+            <td style="padding: 10px 12px; color: #334155;">${act.airline}</td>
+            <td style="padding: 10px 12px; font-weight: 800; color: #2563EB;">₹ ${act.price.toLocaleString("en-IN")}</td>
+          </tr>
+        `).join("");
+      }
+    }
+  } catch (err) {
+    console.error("Failed to load admin metrics:", err);
+  }
+}
+
+const adminChartInstances = {};
+
+function renderAdminBarChart(canvasId, labels, data, datasetLabel, color) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  if (adminChartInstances[canvasId]) {
+    adminChartInstances[canvasId].destroy();
+  }
+  adminChartInstances[canvasId] = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: labels.length ? labels : ["No data"],
+      datasets: [{
+        label: datasetLabel,
+        data: data.length ? data : [0],
+        backgroundColor: color,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: "#F1F5F9" }, ticks: { precision: 0 } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderAdminDoughnutChart(canvasId, labels, data, colors) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  if (adminChartInstances[canvasId]) {
+    adminChartInstances[canvasId].destroy();
+  }
+  const hasData = data.some(val => val > 0);
+  adminChartInstances[canvasId] = new Chart(canvas, {
+    type: "doughnut",
+    data: {
+      labels: hasData ? labels : ["No Data Recorded"],
+      datasets: [{
+        data: hasData ? data : [1],
+        backgroundColor: hasData ? colors : ["#E2E8F0"],
+        borderWidth: 2,
+        borderColor: "#FFFFFF"
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+// ============================================================
 // 8. INITIALIZATION
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
   initNavigation();
   initPredictorForm();
+  initSmartPrediction();
   initBookingTrends();
   initCheaperAlternatives();
   initTravelDateSync();
 
   // Attach event listeners for dynamic flight duration and arrival slot calculation
-  ["source_city", "destination_city", "stops", "departure_time"].forEach(id => {
+  ["source_city", "destination_city", "stops", "departure_time", "airline"].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener("change", () => {
@@ -1202,3 +1614,4 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 });
+
